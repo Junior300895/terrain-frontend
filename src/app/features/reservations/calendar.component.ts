@@ -17,7 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
            style="border-bottom:1px solid var(--border);">
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:var(--accent);">
-            Terrain Principal · Dakar
+            Terrain Principal · Oumar Sy
           </p>
           <h1 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">
             Réservations

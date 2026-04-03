@@ -19,7 +19,7 @@ import { AuthService } from '../../../core/services/auth.service';
               ⚽
             </div>
             <span class="hidden sm:block font-display font-bold text-xl tracking-widest uppercase">
-              Terrain <span style="color:var(--accent);">Dakar</span>
+              Terrain <span style="color:var(--accent);">Oumar Sy</span>
             </span>
           </a>
 

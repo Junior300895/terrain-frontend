@@ -16,7 +16,7 @@ import { RouterLink } from '@angular/router';
               <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
                    style="background:var(--accent-dark);border:1px solid var(--border-accent);">⚽</div>
               <span class="font-display font-bold text-xl tracking-widest uppercase">
-                Terrain <span style="color:var(--accent);">Dakar</span>
+                Terrain <span style="color:var(--accent);">Oumar Sy</span>
               </span>
             </div>
             <p class="text-sm leading-relaxed" style="color:var(--text-secondary);">
@@ -52,7 +52,7 @@ import { RouterLink } from '@angular/router';
               </li>
               <li class="flex items-start gap-2">
                 <span style="color:var(--accent);">⏰</span>
-                <span>Lun–Dim · 8h00 – 22h00</span>
+                <span>Lun–Dim · 8h00 – 23h59</span>
               </li>
               <li class="flex items-start gap-2">
                 <span style="color:var(--accent);">💰</span>
@@ -60,7 +60,7 @@ import { RouterLink } from '@angular/router';
               </li>
               <li class="flex items-start gap-2">
                 <span style="color:var(--accent);">💳</span>
-                <span>Paiement sur place · Wave · Orange Money</span>
+                <span>Paiement sur place disponible · (Wave et Orange Money) en cours </span>
               </li>
             </ul>
           </div>
@@ -70,7 +70,7 @@ import { RouterLink } from '@angular/router';
         <div class="mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
              style="border-top:1px solid var(--border);">
           <p class="text-xs" style="color:var(--text-muted);">
-            &copy; {{ year }} Terrain Dakar. Tous droits réservés.
+            &copy; {{ year }} Terrain Oumar Sy. Tous droits réservés.
           </p>
           <p class="text-xs" style="color:var(--text-muted);">
             Fait avec ❤️ au Sénégal
