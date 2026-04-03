@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api'
+  apiUrl: 'https://terrain-backend-9hpy.onrender.com/api'
 };
