@@ -299,9 +299,9 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
     <!-- ── MODAL APERÇU PDF ─────────────────────────────────────────── -->
     @if (apercuOuvert()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
-           style="background:rgba(0,0,0,0.8);" (click)="apercuOuvert.set(false)">
-        <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden animate-fade-up"
-             style="background:#fff;" (click)="$event.stopPropagation()">
+           style="background:rgba(0,0,0,0.8);overflow:hidden;" (click)="apercuOuvert.set(false)">
+        <div class="w-full max-w-2xl flex flex-col rounded-2xl animate-fade-up"
+             style="background:#fff;max-height:90vh;overflow:hidden;" (click)="$event.stopPropagation()">
 
           <!-- Contenu capturé pour l'image -->
           <div #apercuContent>
@@ -337,7 +337,7 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           </div>
 
           <!-- Tableau scrollable -->
-          <div class="overflow-y-auto flex-1" style="background:#fff;">
+          <div style="overflow-y:auto;flex:1;background:#fff;-webkit-overflow-scrolling:touch;">
             @if (!apercuData()?.reservations?.length) {
               <div class="py-12 text-center text-gray-400">
                 <p class="text-3xl mb-2">⚽</p>
@@ -545,7 +545,7 @@ export class DashboardComponent implements OnInit {
     lignes.push('');
     lignes.push('_Envoyé depuis Terrain Dakar_');
 
-    const message = encodeURIComponent(lignes.join(''));
+    const message = encodeURIComponent(lignes.join('%0A'));
     window.open('https://wa.me/?text=' + message, '_blank');
   }
 
