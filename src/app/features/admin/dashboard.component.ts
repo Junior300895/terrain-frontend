@@ -364,7 +364,9 @@ export class DashboardComponent implements OnInit {
     lignes.push('');
     lignes.push('_Envoyé depuis Terrain Dakar_');
 
-    const message = encodeURIComponent(lignes.join('%0A'));
+    // Encoder le message mais garder les sauts de ligne lisibles par WhatsApp
+    const texte   = lignes.join('\n');
+    const message = encodeURIComponent(texte);
     window.open('https://wa.me/?text=' + message, '_blank');
   }
 
