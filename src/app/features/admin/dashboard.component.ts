@@ -299,27 +299,27 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
     <!-- ── MODAL APERÇU PDF ─────────────────────────────────────────── -->
     @if (apercuOuvert()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
-           style="background:rgba(0,0,0,0.8);overflow:hidden;" (click)="apercuOuvert.set(false)">
-        <div class="w-full max-w-2xl flex flex-col rounded-2xl animate-fade-up"
-             style="background:#fff;max-height:90vh;overflow:hidden;" (click)="$event.stopPropagation()">
+           style="background:rgba(0,0,0,0.8);overflow:hidden;touch-action:none;" (click)="fermerApercu()" (touchmove)="$event.preventDefault()">
+        <div class="w-full max-w-2xl rounded-2xl animate-fade-up"
+             style="background:#fff;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;"
+             (click)="$event.stopPropagation()">
 
-          <!-- Contenu capturé pour l'image -->
+          <!-- Barre verte header — fixe -->
           <div #apercuContent>
-          <!-- Barre verte header -->
-          <div class="px-6 py-4 flex items-center justify-between shrink-0"
-               style="background:#1A7A4E;">
+          <div class="px-6 py-4 flex items-center justify-between"
+               style="background:#1A7A4E;flex-shrink:0;">
             <div>
               <p class="font-bold text-white text-lg">Récapitulatif du jour</p>
               <p class="text-xs" style="color:rgba(255,255,255,0.7);">
                 {{ apercuData()?.date }}  ·  {{ apercuData()?.nbReservations }} réservation(s)
               </p>
             </div>
-            <button (click)="apercuOuvert.set(false)"
+            <button (click)="fermerApercu()"
                     class="text-white text-2xl leading-none opacity-70 hover:opacity-100">×</button>
           </div>
 
           <!-- KPIs -->
-          <div class="grid grid-cols-3 gap-px shrink-0" style="background:#e5e7eb;">
+          <div class="grid grid-cols-3 gap-px" style="background:#e5e7eb;flex-shrink:0;">
             <div class="bg-white px-4 py-3 text-center">
               <p class="text-xs text-gray-500 uppercase tracking-wide">Réservations</p>
               <p class="font-bold text-2xl" style="color:#1A7A4E;">{{ apercuData()?.nbReservations }}</p>
@@ -337,7 +337,7 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           </div>
 
           <!-- Tableau scrollable -->
-          <div style="overflow-y:auto;flex:1;background:#fff;-webkit-overflow-scrolling:touch;">
+          <div style="overflow-y:scroll;flex:1;min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;">
             @if (!apercuData()?.reservations?.length) {
               <div class="py-12 text-center text-gray-400">
                 <p class="text-3xl mb-2">⚽</p>
@@ -388,8 +388,8 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           </div><!-- fin apercuContent -->
 
           <!-- Actions -->
-          <div class="flex gap-3 px-6 py-4 shrink-0" style="border-top:1px solid #e5e7eb;background:#fff;">
-            <button (click)="apercuOuvert.set(false)" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600"
+          <div class="flex gap-3 px-6 py-4" style="border-top:1px solid #e5e7eb;background:#fff;flex-shrink:0;">
+            <button (click)="fermerApercu()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600"
                     style="border:1px solid #e5e7eb;">Fermer</button>
             <button (click)="partagerWhatsapp()"
                     class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider"
@@ -454,7 +454,13 @@ export class DashboardComponent implements OnInit {
   apercuData     = signal<any>(null);
   apercuEnCours  = signal(false);
 
+  fermerApercu() {
+    this.apercuOuvert.set(false);
+    document.body.style.overflow = '';
+  }
+
   async ouvrirApercu() {
+    document.body.style.overflow = 'hidden';
     this.apercuEnCours.set(true);
     const today = new Date().toISOString().slice(0, 10);
     const url   = environment.apiUrl + '/rapports/apercu-journalier?date=' + today;
