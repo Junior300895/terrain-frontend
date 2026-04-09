@@ -1,8 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
-import { Dashboard, Reservation } from '../../core/models';
 import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.component';
 
 @Component({
@@ -12,254 +11,310 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
   template: `
     <div class="space-y-6 animate-fade-up">
 
-      <!-- Page header -->
+      <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-6"
            style="border-bottom:1px solid var(--border);">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:var(--accent);">
-            Administration
-          </p>
-          <h1 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">
-            Dashboard
-          </h1>
+          <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:var(--accent);">Administration</p>
+          <h1 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">Dashboard</h1>
           <p class="text-sm mt-1 capitalize" style="color:var(--text-secondary);">{{ aujourdhui }}</p>
         </div>
-        <button (click)="charger()" class="btn-secondary text-sm self-start sm:self-end">
-          ↻ Actualiser
-        </button>
+        <button (click)="charger()" class="btn-secondary text-sm self-start sm:self-end">↻ Actualiser</button>
       </div>
 
-      <!-- Admin nav tabs -->
       <app-admin-nav />
 
       @if (loading()) {
         <div class="flex items-center justify-center py-32">
-          <div class="text-center space-y-3">
-            <div class="w-12 h-12 rounded-full mx-auto"
-                 style="border:2px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite;"></div>
-            <p class="text-sm" style="color:var(--text-secondary);">Chargement...</p>
-          </div>
+          <div class="w-12 h-12 rounded-full"
+               style="border:2px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite;"></div>
         </div>
       } @else if (dashboard()) {
 
-        <!-- KPIs row -->
+        <!-- KPIs -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up-2">
 
           <div class="card card-hover relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6"
-                 style="background:rgba(0,255,135,0.06);"></div>
-            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">
-              Résa. aujourd'hui
-            </p>
-            <p class="font-display font-bold text-5xl" style="color:var(--accent);">
-              {{ dashboard()!.totalReservationsAujourdhui }}
-            </p>
-            <p class="text-xs mt-2 flex items-center gap-1" style="color:var(--text-muted);">
-              <span style="color:var(--accent);">⚽</span> créneaux joués
-            </p>
+            <div class="absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8" style="background:rgba(0,255,135,0.05);"></div>
+            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">Résa. aujourd'hui</p>
+            <p class="font-display font-bold text-5xl" style="color:var(--accent);">{{ dashboard()!.totalReservationsAujourdhui }}</p>
+            <p class="text-xs mt-2" style="color:var(--text-muted);">⚽ créneaux confirmés</p>
           </div>
 
           <div class="card card-hover relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6"
-                 style="background:rgba(72,149,239,0.06);"></div>
-            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">
-              Résa. ce mois
-            </p>
-            <p class="font-display font-bold text-5xl" style="color:var(--blue);">
-              {{ dashboard()!.totalReservationsMois }}
-            </p>
-            <p class="text-xs mt-2" style="color:var(--text-muted);">
-              {{ moisCourant }}
-            </p>
+            <div class="absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8" style="background:rgba(72,149,239,0.05);"></div>
+            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">Résa. ce mois</p>
+            <p class="font-display font-bold text-5xl" style="color:var(--blue);">{{ dashboard()!.totalReservationsMois }}</p>
+            <p class="text-xs mt-2" style="color:var(--text-muted);">{{ moisCourant }}</p>
           </div>
 
           <div class="card card-hover relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6"
-                 style="background:rgba(0,255,135,0.06);"></div>
-            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">
-              Revenu aujourd'hui
-            </p>
-            <p class="font-display font-bold text-3xl leading-tight" style="color:var(--accent);">
-              {{ formatFcfa(dashboard()!.revenuAujourdhui) }}
-            </p>
-            <p class="text-xs mt-2" style="color:var(--text-muted);">FCFA encaissés</p>
+            <div class="absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8" style="background:rgba(0,255,135,0.05);"></div>
+            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">Encaissé aujourd'hui</p>
+            <p class="font-display font-bold text-3xl leading-tight" style="color:var(--accent);">{{ fmt(dashboard()!.revenuAujourdhui) }}</p>
+            <p class="text-xs mt-2" style="color:var(--text-muted);">FCFA</p>
           </div>
 
           <div class="card card-hover relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6"
-                 style="background:rgba(0,255,135,0.06);"></div>
-            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">
-              Revenu ce mois
-            </p>
-            <p class="font-display font-bold text-3xl leading-tight" style="color:var(--accent);">
-              {{ formatFcfa(dashboard()!.revenuMois) }}
-            </p>
+            <div class="absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8" style="background:rgba(0,255,135,0.05);"></div>
+            <p class="text-xs uppercase tracking-widest font-semibold mb-3" style="color:var(--text-secondary);">Encaissé ce mois</p>
+            <p class="font-display font-bold text-3xl leading-tight" style="color:var(--accent);">{{ fmt(dashboard()!.revenuMois) }}</p>
             <p class="text-xs mt-2" style="color:var(--text-muted);">{{ moisCourant }}</p>
           </div>
         </div>
 
-        <!-- Taux d'occupation + dispo -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up-3">
+        <!-- Graphique 7 jours + Occupation -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-up-3">
 
-          <!-- Barre de progression -->
-          <div class="card sm:col-span-2">
-            <div class="flex items-center justify-between mb-4">
+          <!-- Graphique revenus 7 jours -->
+          <div class="card lg:col-span-2">
+            <div class="flex items-center justify-between mb-6">
               <div>
-                <h2 class="font-display font-bold text-xl uppercase tracking-wide">
-                  Taux d'occupation
-                </h2>
-                <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Aujourd'hui</p>
+                <h2 class="font-display font-bold text-xl uppercase tracking-wide">Revenus — 7 derniers jours</h2>
+                <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Encaissements par jour</p>
               </div>
-              <div class="text-right">
-                <span class="font-display font-bold text-4xl" style="color:var(--accent);">
-                  {{ dashboard()!.tauxOccupation }}
-                </span>
-                <span class="text-xl font-display" style="color:var(--accent);">%</span>
-              </div>
-            </div>
-            <div class="w-full rounded-full h-3 overflow-hidden"
-                 style="background:var(--bg-surface);border:1px solid var(--border);">
-              <div class="h-full rounded-full transition-all duration-1000"
-                   style="background:linear-gradient(90deg, var(--accent-dim), var(--accent));box-shadow:0 0 10px var(--accent-glow);"
-                   [style.width]="dashboard()!.tauxOccupation + '%'">
-              </div>
-            </div>
-            <div class="flex justify-between mt-3 text-xs" style="color:var(--text-muted);">
-              <span>0%</span>
-              <span style="color:var(--text-secondary);">
-                {{ dashboard()!.creneauxDisponiblesAujourdhui }} créneaux disponibles
+              <span class="text-xs px-3 py-1 rounded-full font-semibold"
+                    style="background:rgba(0,255,135,0.1);color:var(--accent);border:1px solid var(--border-accent);">
+                Total : {{ fmt(totalSemaine()) }} F
               </span>
-              <span>100%</span>
             </div>
+
+            <!-- Graphique barres SVG -->
+            @if (dashboard()!.semaine && dashboard()!.semaine.length > 0) {
+              <div class="relative" style="height:180px;">
+                <svg width="100%" height="180" style="overflow:visible;">
+                  @for (j of dashboard()!.semaine; track j.jour; let i = $index) {
+                    <!-- Barre -->
+                    <rect
+                      [attr.x]="barX(i)"
+                      [attr.y]="barY(j.revenu)"
+                      [attr.width]="barW()"
+                      [attr.height]="barH(j.revenu)"
+                      rx="4"
+                      [attr.fill]="j.revenu > 0 ? 'url(#barGrad)' : 'rgba(255,255,255,0.04)'"
+                    />
+                    <!-- Valeur au dessus -->
+                    @if (j.revenu > 0) {
+                      <text
+                        [attr.x]="barX(i) + barW() / 2"
+                        [attr.y]="barY(j.revenu) - 6"
+                        text-anchor="middle"
+                        style="font-size:9px;fill:rgba(0,255,135,0.8);font-family:monospace;">
+                        {{ fmtK(j.revenu) }}
+                      </text>
+                    }
+                    <!-- Label jour -->
+                    <text
+                      [attr.x]="barX(i) + barW() / 2"
+                      y="175"
+                      text-anchor="middle"
+                      style="font-size:10px;fill:rgba(255,255,255,0.4);font-family:Arial;">
+                      {{ j.label }}
+                    </text>
+                    <!-- Nb résa -->
+                    @if (j.nbResa > 0) {
+                      <text
+                        [attr.x]="barX(i) + barW() / 2"
+                        [attr.y]="barY(j.revenu) + barH(j.revenu) / 2 + 4"
+                        text-anchor="middle"
+                        style="font-size:9px;fill:rgba(0,0,0,0.6);font-weight:bold;font-family:Arial;">
+                        {{ j.nbResa }}
+                      </text>
+                    }
+                  }
+                  <defs>
+                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="rgba(0,255,135,0.8)"/>
+                      <stop offset="100%" stop-color="rgba(0,255,135,0.3)"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              <!-- Légende jours avec nbResa -->
+              <div class="flex justify-between mt-2">
+                @for (j of dashboard()!.semaine; track j.jour) {
+                  <div class="text-center" style="flex:1;">
+                    <div class="text-xs font-bold" [style.color]="j.nbResa > 0 ? 'var(--accent)' : 'var(--text-muted)'">
+                      {{ j.nbResa > 0 ? j.nbResa + ' résa' : '—' }}
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="flex items-center justify-center h-40 text-sm" style="color:var(--text-muted);">
+                Aucune donnée cette semaine
+              </div>
+            }
           </div>
 
-          <!-- Statut terrain -->
-          <div class="card flex flex-col items-center justify-center text-center gap-3">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
-                 style="background:var(--accent-dark);border:1px solid var(--border-accent);">⚽</div>
-            <div>
-              <p class="font-display font-bold text-lg uppercase tracking-wide">Terrain actif</p>
-              <p class="text-xs mt-1" style="color:var(--text-secondary);">40 000 FCFA / heure</p>
+          <!-- Taux occupation + stats rapides -->
+          <div class="space-y-4">
+            <!-- Occupation -->
+            <div class="card h-fit">
+              <h2 class="font-display font-bold text-lg uppercase tracking-wide mb-4">Occupation</h2>
+              <div class="flex items-center justify-center mb-4">
+                <!-- Jauge circulaire SVG -->
+                <div class="relative">
+                  <svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="50" fill="none"
+                            stroke="url(#gaugeGrad)"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                            [attr.stroke-dasharray]="314"
+                            [attr.stroke-dashoffset]="314 - (314 * dashboard()!.tauxOccupation / 100)"
+                            transform="rotate(-90 60 60)"
+                            style="transition:stroke-dashoffset 1s ease;"/>
+                    <defs>
+                      <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="rgba(0,255,135,0.6)"/>
+                        <stop offset="100%" stop-color="rgba(0,255,135,1)"/>
+                      </linearGradient>
+                    </defs>
+                    <text x="60" y="55" text-anchor="middle"
+                          style="font-size:22px;font-weight:bold;fill:rgba(0,255,135,1);font-family:Arial;">
+                      {{ dashboard()!.tauxOccupation }}%
+                    </text>
+                    <text x="60" y="72" text-anchor="middle"
+                          style="font-size:9px;fill:rgba(255,255,255,0.4);font-family:Arial;">
+                      aujourd'hui
+                    </text>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex justify-between text-xs px-2">
+                <div class="text-center">
+                  <p class="font-bold text-lg" style="color:var(--accent);">{{ dashboard()!.totalReservationsAujourdhui }}</p>
+                  <p style="color:var(--text-muted);">Réservés</p>
+                </div>
+                <div class="text-center">
+                  <p class="font-bold text-lg" style="color:var(--text-secondary);">{{ dashboard()!.creneauxDisponiblesAujourdhui }}</p>
+                  <p style="color:var(--text-muted);">Disponibles</p>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                 style="background:rgba(0,255,135,0.1);border:1px solid var(--border-accent);">
-              <span class="w-2 h-2 rounded-full glow-pulse" style="background:var(--accent);"></span>
-              <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--accent);">
-                En ligne
-              </span>
+
+            <!-- Raccourcis -->
+            <div class="card">
+              <h3 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--text-secondary);">Accès rapide</h3>
+              <div class="space-y-2">
+                <a routerLink="/admin/creneaux"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
+                   style="background:var(--bg-surface);border:1px solid var(--border);"
+                   onmouseenter="this.style.borderColor='var(--border-accent)'"
+                   onmouseleave="this.style.borderColor='var(--border)'">
+                  <span>🗓</span>
+                  <span class="text-sm font-medium" style="color:var(--text-primary);">Gérer les créneaux</span>
+                  <span class="ml-auto" style="color:var(--text-muted);">→</span>
+                </a>
+                <a routerLink="/admin/reservations"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
+                   style="background:var(--bg-surface);border:1px solid var(--border);"
+                   onmouseenter="this.style.borderColor='var(--border-accent)'"
+                   onmouseleave="this.style.borderColor='var(--border)'">
+                  <span>📋</span>
+                  <span class="text-sm font-medium" style="color:var(--text-primary);">Voir les réservations</span>
+                  <span class="ml-auto" style="color:var(--text-muted);">→</span>
+                </a>
+                <a routerLink="/admin/rapports"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
+                   style="background:var(--bg-surface);border:1px solid var(--border);"
+                   onmouseenter="this.style.borderColor='var(--border-accent)'"
+                   onmouseleave="this.style.borderColor='var(--border)'">
+                  <span>📈</span>
+                  <span class="text-sm font-medium" style="color:var(--text-primary);">Générer un rapport</span>
+                  <span class="ml-auto" style="color:var(--text-muted);">→</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Réservations du jour -->
-        <div class="card animate-fade-up-3">
-          <div class="flex items-center justify-between mb-5">
+        <div class="card animate-fade-up-3" style="padding:0;">
+          <div class="px-6 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border);">
             <div>
-              <h2 class="font-display font-bold text-xl uppercase tracking-wide">
-                Réservations du jour
-              </h2>
-              <p class="text-xs mt-0.5" style="color:var(--text-secondary);">
-                {{ dashboard()!.prochainesReservations.length }} créneau(x) trouvé(s)
-              </p>
+              <h2 class="font-display font-bold text-lg uppercase tracking-wide">Réservations du jour</h2>
+              <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Créneaux planifiés aujourd'hui</p>
             </div>
-            <a routerLink="/admin/reservations"
-               class="text-sm font-medium transition-colors hover:opacity-80"
-               style="color:var(--accent);">
-              Tout voir →
-            </a>
+            <a routerLink="/admin/reservations" class="btn-secondary text-xs px-3 py-1.5">Tout voir →</a>
           </div>
 
-          @if (dashboard()!.prochainesReservations.length === 0) {
-            <div class="text-center py-12 rounded-xl" style="background:var(--bg-surface);border:1px dashed var(--border);">
-              <p class="text-4xl mb-3">📭</p>
-              <p style="color:var(--text-secondary);" class="text-sm">Aucune réservation aujourd'hui</p>
+          @if (!dashboard()!.prochainesReservations?.length) {
+            <div class="py-12 text-center">
+              <p class="text-3xl mb-2">⚽</p>
+              <p class="text-sm" style="color:var(--text-muted);">Aucune réservation aujourd'hui</p>
             </div>
           } @else {
-            <div class="space-y-2">
-              @for (resa of dashboard()!.prochainesReservations; track resa.id) {
-                <div class="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200"
-                     style="background:var(--bg-surface);border:1px solid var(--border);"
-                     onmouseenter="this.style.borderColor='rgba(0,255,135,0.2)'"
-                     onmouseleave="this.style.borderColor='var(--border)'">
-
-                  <!-- Heure badge -->
-                  <div class="flex items-center gap-4">
-                    <div class="text-center min-w-14">
-                      <p class="font-display font-bold text-lg leading-none" style="color:var(--accent);">
-                        {{ formatHeure(resa.creneau.debut) }}
-                      </p>
-                      <p class="text-xs mt-0.5" style="color:var(--text-muted);">
-                        → {{ formatHeure(resa.creneau.fin) }}
-                      </p>
-                    </div>
-                    <div class="w-px h-8" style="background:var(--border);"></div>
-                    <div>
-                      <p class="font-semibold text-sm">
-                        {{ resa.utilisateur.prenom }} {{ resa.utilisateur.nom }}
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <code class="text-xs px-1.5 py-0.5 rounded"
-                              style="background:var(--accent-dark);color:var(--accent);border:1px solid var(--border-accent);">
-                          {{ resa.codeConfirmation }}
-                        </code>
-                        <span class="text-xs" style="color:var(--text-muted);">
-                          {{ resa.utilisateur.telephone }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Montant + statut -->
-                  <div class="text-right flex flex-col items-end gap-1">
-                    <span class="font-display font-bold text-lg" style="color:var(--accent);">
-                      {{ resa.montantTotal | number:'1.0-0' }}<span class="text-xs ml-1" style="color:var(--text-muted);">F</span>
-                    </span>
-                    <span [class]="getStatutClass(resa.statut)">{{ getLabelStatut(resa.statut) }}</span>
-                  </div>
-                </div>
-              }
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm" style="min-width:600px;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border);">
+                    @for (h of ['Heure','Client','Code','Statut','Montant']; track h) {
+                      <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest"
+                          style="color:var(--text-secondary);">{{ h }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of dashboard()!.prochainesReservations; track r.id; let i = $index) {
+                    <tr [style.background]="i % 2 === 0 ? 'transparent' : 'var(--bg-surface)'"
+                        style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                      <td class="px-5 py-3 font-display font-bold" style="color:var(--accent);">
+                        {{ r.creneau?.debut | date:'HH:mm' }}
+                      </td>
+                      <td class="px-5 py-3 font-semibold" style="color:var(--text-primary);">
+                        {{ r.utilisateur?.prenom }} {{ r.utilisateur?.nom }}
+                        <p class="text-xs font-normal" style="color:var(--text-muted);">{{ r.utilisateur?.telephone }}</p>
+                      </td>
+                      <td class="px-5 py-3 font-mono text-xs" style="color:var(--text-muted);">{{ r.codeConfirmation }}</td>
+                      <td class="px-5 py-3"><span [class]="badgeStatut(r.statut)">{{ labelStatut(r.statut) }}</span></td>
+                      <td class="px-5 py-3 font-display font-bold" style="color:var(--accent);">
+                        {{ fmt(r.montantTotal) }} F
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           }
         </div>
-
-        <!-- Accès rapides -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-up-3">
-          <a routerLink="/admin/reservations"
-             class="card card-hover flex items-center gap-4 cursor-pointer group no-underline">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all duration-200"
-                 style="background:rgba(72,149,239,0.1);border:1px solid rgba(72,149,239,0.2);">📋</div>
-            <div>
-              <p class="font-display font-bold text-lg uppercase tracking-wide">Gérer les réservations</p>
-              <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Voir, filtrer, valider les paiements</p>
-            </div>
-            <span class="ml-auto text-xl transition-transform duration-200 group-hover:translate-x-1"
-                  style="color:var(--text-muted);">→</span>
-          </a>
-          <a routerLink="/admin/creneaux"
-             class="card card-hover flex items-center gap-4 cursor-pointer group no-underline">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all duration-200"
-                 style="background:rgba(0,255,135,0.08);border:1px solid var(--border-accent);">🗓</div>
-            <div>
-              <p class="font-display font-bold text-lg uppercase tracking-wide">Gérer les créneaux</p>
-              <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Bloquer, libérer, créer des slots</p>
-            </div>
-            <span class="ml-auto text-xl transition-transform duration-200 group-hover:translate-x-1"
-                  style="color:var(--text-muted);">→</span>
-          </a>
-        </div>
-
       }
     </div>
+
     <style>
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
   `
 })
 export class DashboardComponent implements OnInit {
-  dashboard = signal<Dashboard | null>(null);
-  loading   = signal(true);
-  aujourdhui = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  moisCourant = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  dashboard  = signal<any>(null);
+  loading    = signal(true);
+  aujourdhui = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  moisCourant = new Date().toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+
+  totalSemaine = computed(() => {
+    const s = this.dashboard()?.semaine ?? [];
+    return s.reduce((acc: number, j: any) => acc + j.revenu, 0);
+  });
+
+  // ── Dimensions graphique ─────────────────────────────────────────────────
+  private readonly CHART_W = 600;
+  private readonly CHART_H = 155;
+  private readonly GAP     = 8;
+
+  barW()  { return (this.CHART_W / 7) - this.GAP; }
+  barX(i: number) {
+    return i * (this.CHART_W / 7) + this.GAP / 2;
+  }
+  barH(revenu: number) {
+    const max = Math.max(...(this.dashboard()?.semaine ?? []).map((j: any) => j.revenu), 1);
+    return Math.max(4, (revenu / max) * this.CHART_H);
+  }
+  barY(revenu: number) {
+    return this.CHART_H - this.barH(revenu);
+  }
 
   constructor(private adminSvc: AdminService) {}
   ngOnInit() { this.charger(); }
@@ -268,20 +323,26 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.adminSvc.getDashboard().subscribe({
       next:  d => { this.dashboard.set(d); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
-  formatFcfa(n: number): string {
-    return new Intl.NumberFormat('fr-FR').format(n || 0) + ' F';
+  fmt(n: number): string {
+    return new Intl.NumberFormat('fr-FR').format(n || 0);
   }
-  formatHeure(d: string): string {
-    return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  fmtK(n: number): string {
+    if (n >= 1000) return Math.round(n / 1000) + 'k';
+    return String(n);
   }
-  getStatutClass(s: string): string {
-    return ({CONFIRMEE:'badge-confirme',EN_ATTENTE:'badge-attente',ANNULEE:'badge-bloque'} as any)[s] ?? '';
+
+  badgeStatut(s: string): string {
+    return ({ CONFIRMEE:'badge-confirme', EN_ATTENTE:'badge-attente',
+              ANNULEE:'badge-bloque', EXPIREE:'badge-bloque' } as any)[s] ?? '';
   }
-  getLabelStatut(s: string): string {
-    return ({CONFIRMEE:'Confirmée',EN_ATTENTE:'En attente',ANNULEE:'Annulée'} as any)[s] ?? s;
+
+  labelStatut(s: string): string {
+    return ({ CONFIRMEE:'Confirmée', EN_ATTENTE:'En attente',
+              ANNULEE:'Annulée', EXPIREE:'Expirée' } as any)[s] ?? s;
   }
 }
