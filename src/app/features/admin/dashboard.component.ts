@@ -351,7 +351,7 @@ export class DashboardComponent implements OnInit {
     lignes.push('');
     lignes.push('📊 *Résumé*');
     lignes.push('• Réservations : ' + resas.length);
-    lignes.push('• Encaissé : ' + this.fmt(encaisse) + ' FCFA');
+    // lignes.push('• Encaissé : ' + this.fmt(encaisse) + ' FCFA');
     lignes.push('');
     lignes.push('📋 *Planning du jour*');
     for (const r of resas) {
