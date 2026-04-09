@@ -1,16 +1,16 @@
-import { Component, OnInit, signal, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AdminNavComponent, HttpClientModule],
+  imports: [CommonModule, RouterLink, AdminNavComponent],
   template: `
     <div class="space-y-6 animate-fade-up">
 
@@ -23,14 +23,7 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           <p class="text-sm mt-1 capitalize" style="color:var(--text-secondary);">{{ aujourdhui }}</p>
         </div>
         <div class="flex gap-2 self-start sm:self-end">
-          <button (click)="ouvrirApercu()"
-                  [disabled]="apercuEnCours()"
-                  class="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold uppercase tracking-wider transition-all disabled:opacity-40"
-                  style="background:rgba(220,38,38,0.1);color:#ef4444;border:1px solid rgba(220,38,38,0.3);"
-                  onmouseenter="this.style.background='rgba(220,38,38,0.2)'"
-                  onmouseleave="this.style.background='rgba(220,38,38,0.1)'">
-            {{ apercuEnCours() ? '...' : '📄 Récap du jour' }}
-          </button>
+
           <button (click)="charger()" class="btn-secondary text-sm">↻ Actualiser</button>
         </div>
       </div>
@@ -251,7 +244,15 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
               <h2 class="font-display font-bold text-lg uppercase tracking-wide">Réservations du jour</h2>
               <p class="text-xs mt-0.5" style="color:var(--text-secondary);">Créneaux planifiés aujourd'hui</p>
             </div>
-            <a routerLink="/admin/reservations" class="btn-secondary text-xs px-3 py-1.5">Tout voir →</a>
+            <div class="flex gap-2 items-center">
+              <button (click)="envoyerWhatsapp()"
+                      [disabled]="waEnCours()"
+                      class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-xl font-semibold uppercase tracking-wider transition-all disabled:opacity-40"
+                      style="background:rgba(37,211,102,0.1);color:#25d366;border:1px solid rgba(37,211,102,0.3);">
+                {{ waEnCours() ? '...' : '📲 WhatsApp' }}
+              </button>
+              <a routerLink="/admin/reservations" class="btn-secondary text-xs px-3 py-1.5">Tout voir →</a>
+            </div>
           </div>
 
           @if (!dashboard()!.prochainesReservations?.length) {
@@ -296,118 +297,6 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
       }
     </div>
 
-    <!-- ── MODAL APERÇU PDF ─────────────────────────────────────────── -->
-    @if (apercuOuvert()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
-           style="background:rgba(0,0,0,0.8);overflow:hidden;touch-action:none;" (click)="fermerApercu()" (touchmove)="$event.preventDefault()">
-        <div class="w-full max-w-2xl rounded-2xl animate-fade-up"
-             style="background:#fff;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;"
-             (click)="$event.stopPropagation()">
-
-          <!-- Barre verte header — fixe -->
-          <div #apercuContent>
-          <div class="px-6 py-4 flex items-center justify-between"
-               style="background:#1A7A4E;flex-shrink:0;">
-            <div>
-              <p class="font-bold text-white text-lg">Récapitulatif du jour</p>
-              <p class="text-xs" style="color:rgba(255,255,255,0.7);">
-                {{ apercuData()?.date }}  ·  {{ apercuData()?.nbReservations }} réservation(s)
-              </p>
-            </div>
-            <button (click)="fermerApercu()"
-                    class="text-white text-2xl leading-none opacity-70 hover:opacity-100">×</button>
-          </div>
-
-          <!-- KPIs -->
-          <div class="grid grid-cols-3 gap-px" style="background:#e5e7eb;flex-shrink:0;">
-            <div class="bg-white px-4 py-3 text-center">
-              <p class="text-xs text-gray-500 uppercase tracking-wide">Réservations</p>
-              <p class="font-bold text-2xl" style="color:#1A7A4E;">{{ apercuData()?.nbReservations }}</p>
-            </div>
-            <div class="bg-white px-4 py-3 text-center">
-              <p class="text-xs text-gray-500 uppercase tracking-wide">Encaissé</p>
-              <p class="font-bold text-xl" style="color:#1A7A4E;">{{ fmtNum(apercuData()?.totalEncaisse) }} F</p>
-            </div>
-            <div class="bg-white px-4 py-3 text-center">
-              <p class="text-xs text-gray-500 uppercase tracking-wide">Reste</p>
-              <p class="font-bold text-xl" [style.color]="apercuData()?.totalReste > 0 ? '#CC0000' : '#1A7A4E'">
-                {{ apercuData()?.totalReste > 0 ? fmtNum(apercuData()?.totalReste) + ' F' : '✓ Soldé' }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Tableau scrollable -->
-          <div style="overflow-y:scroll;flex:1;min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;">
-            @if (!apercuData()?.reservations?.length) {
-              <div class="py-12 text-center text-gray-400">
-                <p class="text-3xl mb-2">⚽</p>
-                <p>Aucune réservation aujourd'hui</p>
-              </div>
-            } @else {
-              <table class="w-full text-sm border-collapse">
-                <thead class="sticky top-0" style="background:#f9fafb;">
-                  <tr>
-                    @for (h of ['Heure','Client','Tél.','Statut','Encaissé','Reste']; track h) {
-                      <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-                          style="border-bottom:2px solid #e5e7eb;">{{ h }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (r of apercuData()?.reservations; track r.code; let i = $index) {
-                    <tr [style.background]="i % 2 === 0 ? '#fff' : '#f9fafb'">
-                      <td class="px-3 py-2.5 font-bold text-sm" style="color:#1A7A4E;border-bottom:1px solid #f3f4f6;">
-                        {{ r.heure }}
-                      </td>
-                      <td class="px-3 py-2.5" style="border-bottom:1px solid #f3f4f6;">
-                        <p class="font-semibold text-gray-800">{{ r.client }}</p>
-                        <p class="text-xs text-gray-400">{{ r.code }}</p>
-                      </td>
-                      <td class="px-3 py-2.5 text-xs text-gray-600" style="border-bottom:1px solid #f3f4f6;">{{ r.telephone }}</td>
-                      <td class="px-3 py-2.5" style="border-bottom:1px solid #f3f4f6;">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                              [style.background]="r.statut === 'CONFIRMEE' ? '#d6f0e4' : '#fef3cd'"
-                              [style.color]="r.statut === 'CONFIRMEE' ? '#1A7A4E' : '#92400e'">
-                          {{ r.statut === 'CONFIRMEE' ? 'Confirmée' : 'En attente' }}
-                        </span>
-                      </td>
-                      <td class="px-3 py-2.5 font-semibold text-right" style="color:#1A7A4E;border-bottom:1px solid #f3f4f6;">
-                        {{ fmtNum(r.encaisse) }} F
-                      </td>
-                      <td class="px-3 py-2.5 font-semibold text-right" style="border-bottom:1px solid #f3f4f6;"
-                          [style.color]="r.reste > 0 ? '#CC0000' : '#9ca3af'">
-                        {{ r.reste > 0 ? fmtNum(r.reste) + ' F' : '—' }}
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </div>
-
-          </div><!-- fin apercuContent -->
-
-          <!-- Actions -->
-          <div class="flex gap-3 px-6 py-4" style="border-top:1px solid #e5e7eb;background:#fff;flex-shrink:0;">
-            <button (click)="fermerApercu()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600"
-                    style="border:1px solid #e5e7eb;">Fermer</button>
-            <button (click)="partagerWhatsapp()"
-                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider"
-                    style="background:rgba(37,211,102,0.1);color:#25d366;border:1px solid rgba(37,211,102,0.3);">
-              📲 WhatsApp
-            </button>
-            <button (click)="telechargerPDF()"
-                    [disabled]="pdfEnCours"
-                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider disabled:opacity-40"
-                    style="background:rgba(220,38,38,0.1);color:#ef4444;border:1px solid rgba(220,38,38,0.3);">
-              📄 {{ pdfEnCours ? '...' : 'PDF' }}
-            </button>
-
-          </div>
-        </div>
-      </div>
-    }
-
     <style>
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -448,54 +337,57 @@ export class DashboardComponent implements OnInit {
   ) {}
   ngOnInit() { this.charger(); }
 
-  pdfEnCours     = false;
-  @ViewChild('apercuContent') apercuContent!: ElementRef;
-  apercuOuvert   = signal(false);
-  apercuData     = signal<any>(null);
-  apercuEnCours  = signal(false);
 
-  fermerApercu() {
-    this.apercuOuvert.set(false);
-    document.body.style.overflow = '';
-  }
+  waEnCours = signal(false);
 
-  async ouvrirApercu() {
-    document.body.style.overflow = 'hidden';
-    this.apercuEnCours.set(true);
+  async envoyerWhatsapp() {
+    if (this.waEnCours()) return;
+    this.waEnCours.set(true);
     const today = new Date().toISOString().slice(0, 10);
-    const url   = environment.apiUrl + '/rapports/apercu-journalier?date=' + today;
+    const url   = `${environment.apiUrl}/rapports/apercu-journalier?date=${today}`;
     const token = this.auth.getToken();
     try {
       const res  = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-      const data = await res.json();
-      this.apercuData.set(data.data ?? data);
-      this.apercuOuvert.set(true);
+      const json = await res.json();
+      const data = json.data ?? json;
+
+      const dateLabel = new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      const lignes: string[] = [];
+      lignes.push('⚽ *TERRAIN DAKAR*');
+      lignes.push('📅 ' + dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1));
+      lignes.push('');
+      lignes.push('📊 *Résumé*');
+      lignes.push('• Réservations : ' + data.nbReservations);
+      lignes.push('• Encaissé : ' + this.fmt(data.totalEncaisse) + ' FCFA');
+      if (data.totalReste > 0) {
+        lignes.push('• Reste à payer : ' + this.fmt(data.totalReste) + ' FCFA');
+      } else {
+        lignes.push('• Tout est soldé ✅');
+      }
+      lignes.push('');
+      lignes.push('📋 *Planning du jour*');
+      for (const r of data.reservations ?? []) {
+        const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
+        const reste  = r.reste > 0 ? ' — Reste ' + this.fmt(r.reste) + ' F' : '';
+        lignes.push(statut + ' *' + r.heure + '* — ' + r.client + ' (' + r.telephone + ')' + reste);
+      }
+      lignes.push('');
+      lignes.push('_Envoyé depuis Terrain Dakar_');
+
+      const message = encodeURIComponent(lignes.join('%0A'));
+      window.open('https://wa.me/?text=' + message, '_blank');
     } catch (e) {
       console.error(e);
     } finally {
-      this.apercuEnCours.set(false);
+      this.waEnCours.set(false);
     }
   }
 
-  async telechargerPDF() {
-    if (this.pdfEnCours) return;
-    this.pdfEnCours = true;
-    const today = new Date().toISOString().slice(0, 10);
-    const url   = environment.apiUrl + '/rapports/pdf-journalier?date=' + today;
-    const token = this.auth.getToken();
-    try {
-      const response = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-      const blob     = await response.blob();
-      const a        = document.createElement('a');
-      a.href         = URL.createObjectURL(blob);
-      a.download     = 'recap-reservations-' + today + '.pdf';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch (err) {
-      console.error('Erreur PDF :', err);
-    } finally {
-      this.pdfEnCours = false;
-    }
+    fmt(n: number): string {
+    return new Intl.NumberFormat('fr-FR').format(n || 0);
   }
 
   charger() {
@@ -504,60 +396,6 @@ export class DashboardComponent implements OnInit {
       next:  d => { this.dashboard.set(d); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
-  }
-
-  fmt(n: number): string {
-    return new Intl.NumberFormat('fr-FR').format(n || 0);
-  }
-
-  partagerWhatsapp() {
-    const data = this.apercuData();
-    if (!data) return;
-
-    const today = new Date().toLocaleDateString('fr-FR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
-
-    const lignes: string[] = [];
-
-    // En-tête
-    lignes.push('⚽ *TERRAIN DAKAR*');
-    lignes.push('📅 ' + today.charAt(0).toUpperCase() + today.slice(1));
-    lignes.push('');
-
-    // KPIs
-    lignes.push('📊 *Résumé*');
-    lignes.push('• Réservations : ' + data.nbReservations);
-    lignes.push('• Encaissé : ' + this.fmtNum(data.totalEncaisse) + ' FCFA');
-    if (data.totalReste > 0) {
-      lignes.push('• Reste à payer : ' + this.fmtNum(data.totalReste) + ' FCFA');
-    } else {
-      lignes.push('• Tout est soldé ✅');
-    }
-    lignes.push('');
-
-    // Liste des réservations
-    if (data.reservations?.length) {
-      lignes.push('📋 *Planning du jour*');
-      for (const r of data.reservations) {
-        const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
-        const reste  = r.reste > 0 ? ' — Reste ' + this.fmtNum(r.reste) + ' F' : '';
-        lignes.push(statut + ' *' + r.heure + '* — ' + r.client + ' (' + r.telephone + ')' + reste);
-      }
-    } else {
-      lignes.push("Aucune réservation aujourd'hui.");
-    }
-
-    lignes.push('');
-    lignes.push('_Envoyé depuis Terrain Dakar_');
-
-    
-    const message = encodeURIComponent(lignes.join('%0A'));
-    window.open('https://wa.me/?text=' + message, '_blank');
-  }
-
-  fmtNum(n: number): string {
-    return new Intl.NumberFormat('fr-FR').format(Math.round(n || 0));
   }
 
   fmtK(n: number): string {
