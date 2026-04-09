@@ -397,7 +397,7 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
                     style="background:rgba(37,211,102,0.1);color:#25d366;border:1px solid rgba(37,211,102,0.3);">
               📲 {{ imageEnCours ? '...' : 'WhatsApp' }}
             </button>
-            <button (click)="telechargerPDF(false)"
+            <button (click)="telechargerPDF()"
                     [disabled]="pdfEnCours"
                     class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider disabled:opacity-40"
                     style="background:rgba(220,38,38,0.1);color:#ef4444;border:1px solid rgba(220,38,38,0.3);">
@@ -473,46 +473,22 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  async telechargerPDF(partager = false) {
+  async telechargerPDF() {
     if (this.pdfEnCours) return;
     this.pdfEnCours = true;
-
     const today = new Date().toISOString().slice(0, 10);
     const url   = environment.apiUrl + '/rapports/pdf-journalier?date=' + today;
     const token = this.auth.getToken();
-
     try {
       const response = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
       const blob     = await response.blob();
-      const fname    = 'recap-reservations-' + today + '.pdf';
-      const file     = new File([blob], fname, { type: 'application/pdf' });
-
-      // Web Share API — partage natif (WhatsApp, Telegram, email...)
-      if (partager && navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title:  'Récap réservations — ' + today,
-          text:   'Récapitulatif des réservations Terrain Dakar du ' + today,
-          files:  [file],
-        });
-      } else {
-        // Fallback : téléchargement direct
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fname;
-        a.click();
-        URL.revokeObjectURL(a.href);
-
-        // Si partager était demandé mais Web Share non dispo → ouvrir WhatsApp Web
-        if (partager) {
-          const msg = encodeURIComponent('Récapitulatif réservations Terrain Dakar du ' + today + ' — voir fichier joint.');
-          window.open('https://wa.me/?text=' + msg, '_blank');
-        }
-      }
-    } catch (err: any) {
-      if (err?.name !== 'AbortError') {
-        // Partage annulé par l'utilisateur — ignorer
-        console.error('Erreur PDF :', err);
-      }
+      const a        = document.createElement('a');
+      a.href         = URL.createObjectURL(blob);
+      a.download     = 'recap-reservations-' + today + '.pdf';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      console.error('Erreur PDF :', err);
     } finally {
       this.pdfEnCours = false;
     }
@@ -535,65 +511,28 @@ export class DashboardComponent implements OnInit {
     this.imageEnCours = true;
     try {
       const html2canvas = (await import('html2canvas')).default;
-
-      // Scale 1.5 pour réduire la taille — évite les problèmes mémoire sur mobile
       const canvas = await html2canvas(this.apercuContent.nativeElement, {
         scale: 1.5,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        removeContainer: true,
       });
 
+      // 1. Télécharger l'image sur l'appareil
       const today = new Date().toISOString().slice(0, 10);
-      const fname = 'recap-' + today + '.png';
+      const a     = document.createElement('a');
+      a.href      = canvas.toDataURL('image/png');
+      a.download  = 'recap-' + today + '.png';
+      a.click();
 
-      // Convertir en Blob avec gestion null explicite
-      const blob: Blob | null = await new Promise(resolve =>
-        canvas.toBlob(b => resolve(b), 'image/png', 0.92)
+      // 2. Ouvrir WhatsApp avec message pré-rempli (800ms pour laisser le temps au téléchargement)
+      const msg = encodeURIComponent(
+        'Récapitulatif des réservations Terrain Dakar du ' + today +
+        '. Voir image téléchargée.'
       );
-
-      if (!blob) throw new Error('Blob null');
-
-      const file = new File([blob], fname, { type: 'image/png', lastModified: Date.now() });
-
-      // Tester le support Web Share avec fichier
-      const nav = navigator as any;
-      const canShareFile = !!(nav.share && nav.canShare?.({ files: [file] }));
-
-      if (canShareFile) {
-        // Partage natif — WhatsApp, Telegram, email...
-        await nav.share({ files: [file], title: 'Récap Terrain Dakar', text: today });
-      } else if (nav.share) {
-        // Web Share sans fichier — partager l'URL
-        await nav.share({
-          title: 'Récap réservations ' + today,
-          text: 'Récapitulatif Terrain Dakar du ' + today,
-          url: window.location.href,
-        });
-      } else {
-        // Fallback ultime — télécharger l'image
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a');
-        a.href    = url; a.download = fname; a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-    } catch (e: any) {
-      if (e?.name === 'AbortError') return; // annulé par l'utilisateur
-      // Dernier recours — téléchargement direct
-      console.warn('Web Share échoué, téléchargement direct :', e?.message);
-      try {
-        const html2canvas = (await import('html2canvas')).default;
-        const canvas2 = await html2canvas(this.apercuContent.nativeElement, {
-          scale: 1, backgroundColor: '#ffffff', logging: false,
-        });
-        const today = new Date().toISOString().slice(0, 10);
-        const a = document.createElement('a');
-        a.href = canvas2.toDataURL('image/png');
-        a.download = 'recap-' + today + '.png';
-        a.click();
-      } catch (e2) { console.error(e2); }
+      setTimeout(() => window.open('https://wa.me/?text=' + msg, '_blank'), 800);
+    } catch (e) {
+      console.error('Erreur :', e);
     } finally {
       this.imageEnCours = false;
     }
