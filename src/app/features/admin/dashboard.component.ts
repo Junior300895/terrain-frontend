@@ -391,11 +391,10 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           <div class="flex gap-3 px-6 py-4 shrink-0" style="border-top:1px solid #e5e7eb;background:#fff;">
             <button (click)="apercuOuvert.set(false)" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600"
                     style="border:1px solid #e5e7eb;">Fermer</button>
-            <button (click)="partagerImageWhatsapp()"
-                    [disabled]="imageEnCours"
-                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider disabled:opacity-40"
+            <button (click)="partagerWhatsapp()"
+                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider"
                     style="background:rgba(37,211,102,0.1);color:#25d366;border:1px solid rgba(37,211,102,0.3);">
-              📲 {{ imageEnCours ? '...' : 'WhatsApp' }}
+              📲 WhatsApp
             </button>
             <button (click)="telechargerPDF()"
                     [disabled]="pdfEnCours"
@@ -450,7 +449,6 @@ export class DashboardComponent implements OnInit {
   ngOnInit() { this.charger(); }
 
   pdfEnCours     = false;
-  imageEnCours   = false;
   @ViewChild('apercuContent') apercuContent!: ElementRef;
   apercuOuvert   = signal(false);
   apercuData     = signal<any>(null);
@@ -506,36 +504,49 @@ export class DashboardComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR').format(n || 0);
   }
 
-  async partagerImageWhatsapp() {
-    if (!this.apercuContent) return;
-    this.imageEnCours = true;
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(this.apercuContent.nativeElement, {
-        scale: 1.5,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
+  partagerWhatsapp() {
+    const data = this.apercuData();
+    if (!data) return;
 
-      // 1. Télécharger l'image sur l'appareil
-      const today = new Date().toISOString().slice(0, 10);
-      const a     = document.createElement('a');
-      a.href      = canvas.toDataURL('image/png');
-      a.download  = 'recap-' + today + '.png';
-      a.click();
+    const today = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
 
-      // 2. Ouvrir WhatsApp avec message pré-rempli (800ms pour laisser le temps au téléchargement)
-      const msg = encodeURIComponent(
-        'Récapitulatif des réservations Terrain Dakar du ' + today +
-        '. Voir image téléchargée.'
-      );
-      setTimeout(() => window.open('https://wa.me/?text=' + msg, '_blank'), 800);
-    } catch (e) {
-      console.error('Erreur :', e);
-    } finally {
-      this.imageEnCours = false;
+    const lignes: string[] = [];
+
+    // En-tête
+    lignes.push('⚽ *TERRAIN DAKAR*');
+    lignes.push('📅 ' + today.charAt(0).toUpperCase() + today.slice(1));
+    lignes.push('');
+
+    // KPIs
+    lignes.push('📊 *Résumé*');
+    lignes.push('• Réservations : ' + data.nbReservations);
+    lignes.push('• Encaissé : ' + this.fmtNum(data.totalEncaisse) + ' FCFA');
+    if (data.totalReste > 0) {
+      lignes.push('• Reste à payer : ' + this.fmtNum(data.totalReste) + ' FCFA');
+    } else {
+      lignes.push('• Tout est soldé ✅');
     }
+    lignes.push('');
+
+    // Liste des réservations
+    if (data.reservations?.length) {
+      lignes.push('📋 *Planning du jour*');
+      for (const r of data.reservations) {
+        const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
+        const reste  = r.reste > 0 ? ' — Reste ' + this.fmtNum(r.reste) + ' F' : '';
+        lignes.push(statut + ' *' + r.heure + '* — ' + r.client + ' (' + r.telephone + ')' + reste);
+      }
+    } else {
+      lignes.push("Aucune réservation aujourd'hui.");
+    }
+
+    lignes.push('');
+    lignes.push('_Envoyé depuis Terrain Dakar_');
+
+    const message = encodeURIComponent(lignes.join(''));
+    window.open('https://wa.me/?text=' + message, '_blank');
   }
 
   fmtNum(n: number): string {
