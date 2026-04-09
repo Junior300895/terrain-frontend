@@ -1,13 +1,16 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AdminNavComponent],
+  imports: [CommonModule, RouterLink, AdminNavComponent, HttpClientModule],
   template: `
     <div class="space-y-6 animate-fade-up">
 
@@ -19,7 +22,17 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
           <h1 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">Dashboard</h1>
           <p class="text-sm mt-1 capitalize" style="color:var(--text-secondary);">{{ aujourdhui }}</p>
         </div>
-        <button (click)="charger()" class="btn-secondary text-sm self-start sm:self-end">↻ Actualiser</button>
+        <div class="flex gap-2 self-start sm:self-end">
+          <button (click)="ouvrirApercu()"
+                  [disabled]="apercuEnCours()"
+                  class="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold uppercase tracking-wider transition-all disabled:opacity-40"
+                  style="background:rgba(220,38,38,0.1);color:#ef4444;border:1px solid rgba(220,38,38,0.3);"
+                  onmouseenter="this.style.background='rgba(220,38,38,0.2)'"
+                  onmouseleave="this.style.background='rgba(220,38,38,0.1)'">
+            {{ apercuEnCours() ? '...' : '📄 Récap du jour' }}
+          </button>
+          <button (click)="charger()" class="btn-secondary text-sm">↻ Actualiser</button>
+        </div>
       </div>
 
       <app-admin-nav />
@@ -283,6 +296,119 @@ import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.c
       }
     </div>
 
+    <!-- ── MODAL APERÇU PDF ─────────────────────────────────────────── -->
+    @if (apercuOuvert()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+           style="background:rgba(0,0,0,0.8);" (click)="apercuOuvert.set(false)">
+        <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden animate-fade-up"
+             style="background:#fff;" (click)="$event.stopPropagation()">
+
+          <!-- Contenu capturé pour l'image -->
+          <div #apercuContent>
+          <!-- Barre verte header -->
+          <div class="px-6 py-4 flex items-center justify-between shrink-0"
+               style="background:#1A7A4E;">
+            <div>
+              <p class="font-bold text-white text-lg">Récapitulatif du jour</p>
+              <p class="text-xs" style="color:rgba(255,255,255,0.7);">
+                {{ apercuData()?.date }}  ·  {{ apercuData()?.nbReservations }} réservation(s)
+              </p>
+            </div>
+            <button (click)="apercuOuvert.set(false)"
+                    class="text-white text-2xl leading-none opacity-70 hover:opacity-100">×</button>
+          </div>
+
+          <!-- KPIs -->
+          <div class="grid grid-cols-3 gap-px shrink-0" style="background:#e5e7eb;">
+            <div class="bg-white px-4 py-3 text-center">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Réservations</p>
+              <p class="font-bold text-2xl" style="color:#1A7A4E;">{{ apercuData()?.nbReservations }}</p>
+            </div>
+            <div class="bg-white px-4 py-3 text-center">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Encaissé</p>
+              <p class="font-bold text-xl" style="color:#1A7A4E;">{{ fmtNum(apercuData()?.totalEncaisse) }} F</p>
+            </div>
+            <div class="bg-white px-4 py-3 text-center">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Reste</p>
+              <p class="font-bold text-xl" [style.color]="apercuData()?.totalReste > 0 ? '#CC0000' : '#1A7A4E'">
+                {{ apercuData()?.totalReste > 0 ? fmtNum(apercuData()?.totalReste) + ' F' : '✓ Soldé' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Tableau scrollable -->
+          <div class="overflow-y-auto flex-1" style="background:#fff;">
+            @if (!apercuData()?.reservations?.length) {
+              <div class="py-12 text-center text-gray-400">
+                <p class="text-3xl mb-2">⚽</p>
+                <p>Aucune réservation aujourd'hui</p>
+              </div>
+            } @else {
+              <table class="w-full text-sm border-collapse">
+                <thead class="sticky top-0" style="background:#f9fafb;">
+                  <tr>
+                    @for (h of ['Heure','Client','Tél.','Statut','Encaissé','Reste']; track h) {
+                      <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                          style="border-bottom:2px solid #e5e7eb;">{{ h }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of apercuData()?.reservations; track r.code; let i = $index) {
+                    <tr [style.background]="i % 2 === 0 ? '#fff' : '#f9fafb'">
+                      <td class="px-3 py-2.5 font-bold text-sm" style="color:#1A7A4E;border-bottom:1px solid #f3f4f6;">
+                        {{ r.heure }}
+                      </td>
+                      <td class="px-3 py-2.5" style="border-bottom:1px solid #f3f4f6;">
+                        <p class="font-semibold text-gray-800">{{ r.client }}</p>
+                        <p class="text-xs text-gray-400">{{ r.code }}</p>
+                      </td>
+                      <td class="px-3 py-2.5 text-xs text-gray-600" style="border-bottom:1px solid #f3f4f6;">{{ r.telephone }}</td>
+                      <td class="px-3 py-2.5" style="border-bottom:1px solid #f3f4f6;">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                              [style.background]="r.statut === 'CONFIRMEE' ? '#d6f0e4' : '#fef3cd'"
+                              [style.color]="r.statut === 'CONFIRMEE' ? '#1A7A4E' : '#92400e'">
+                          {{ r.statut === 'CONFIRMEE' ? 'Confirmée' : 'En attente' }}
+                        </span>
+                      </td>
+                      <td class="px-3 py-2.5 font-semibold text-right" style="color:#1A7A4E;border-bottom:1px solid #f3f4f6;">
+                        {{ fmtNum(r.encaisse) }} F
+                      </td>
+                      <td class="px-3 py-2.5 font-semibold text-right" style="border-bottom:1px solid #f3f4f6;"
+                          [style.color]="r.reste > 0 ? '#CC0000' : '#9ca3af'">
+                        {{ r.reste > 0 ? fmtNum(r.reste) + ' F' : '—' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+
+          </div><!-- fin apercuContent -->
+
+          <!-- Actions -->
+          <div class="flex gap-3 px-6 py-4 shrink-0" style="border-top:1px solid #e5e7eb;background:#fff;">
+            <button (click)="apercuOuvert.set(false)" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600"
+                    style="border:1px solid #e5e7eb;">Fermer</button>
+            <button (click)="partagerImageWhatsapp()"
+                    [disabled]="imageEnCours"
+                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider disabled:opacity-40"
+                    style="background:rgba(37,211,102,0.1);color:#25d366;border:1px solid rgba(37,211,102,0.3);">
+              📲 {{ imageEnCours ? '...' : 'WhatsApp' }}
+            </button>
+            <button (click)="telechargerPDF(false)"
+                    [disabled]="pdfEnCours"
+                    class="flex-1 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider disabled:opacity-40"
+                    style="background:rgba(220,38,38,0.1);color:#ef4444;border:1px solid rgba(220,38,38,0.3);">
+              📄 {{ pdfEnCours ? '...' : 'PDF' }}
+            </button>
+
+          </div>
+        </div>
+      </div>
+    }
+
     <style>
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -316,8 +442,81 @@ export class DashboardComponent implements OnInit {
     return this.CHART_H - this.barH(revenu);
   }
 
-  constructor(private adminSvc: AdminService) {}
+  constructor(
+    private adminSvc: AdminService,
+    private auth: AuthService,
+    private http: HttpClient,
+  ) {}
   ngOnInit() { this.charger(); }
+
+  pdfEnCours     = false;
+  imageEnCours   = false;
+  @ViewChild('apercuContent') apercuContent!: ElementRef;
+  apercuOuvert   = signal(false);
+  apercuData     = signal<any>(null);
+  apercuEnCours  = signal(false);
+
+  async ouvrirApercu() {
+    this.apercuEnCours.set(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const url   = environment.apiUrl + '/rapports/apercu-journalier?date=' + today;
+    const token = this.auth.getToken();
+    try {
+      const res  = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      this.apercuData.set(data.data ?? data);
+      this.apercuOuvert.set(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.apercuEnCours.set(false);
+    }
+  }
+
+  async telechargerPDF(partager = false) {
+    if (this.pdfEnCours) return;
+    this.pdfEnCours = true;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const url   = environment.apiUrl + '/rapports/pdf-journalier?date=' + today;
+    const token = this.auth.getToken();
+
+    try {
+      const response = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      const blob     = await response.blob();
+      const fname    = 'recap-reservations-' + today + '.pdf';
+      const file     = new File([blob], fname, { type: 'application/pdf' });
+
+      // Web Share API — partage natif (WhatsApp, Telegram, email...)
+      if (partager && navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title:  'Récap réservations — ' + today,
+          text:   'Récapitulatif des réservations Terrain Dakar du ' + today,
+          files:  [file],
+        });
+      } else {
+        // Fallback : téléchargement direct
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fname;
+        a.click();
+        URL.revokeObjectURL(a.href);
+
+        // Si partager était demandé mais Web Share non dispo → ouvrir WhatsApp Web
+        if (partager) {
+          const msg = encodeURIComponent('Récapitulatif réservations Terrain Dakar du ' + today + ' — voir fichier joint.');
+          window.open('https://wa.me/?text=' + msg, '_blank');
+        }
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        // Partage annulé par l'utilisateur — ignorer
+        console.error('Erreur PDF :', err);
+      }
+    } finally {
+      this.pdfEnCours = false;
+    }
+  }
 
   charger() {
     this.loading.set(true);
@@ -329,6 +528,53 @@ export class DashboardComponent implements OnInit {
 
   fmt(n: number): string {
     return new Intl.NumberFormat('fr-FR').format(n || 0);
+  }
+
+  async partagerImageWhatsapp() {
+    if (!this.apercuContent) return;
+    this.imageEnCours = true;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(this.apercuContent.nativeElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const today = new Date().toISOString().slice(0, 10);
+      const fname = 'recap-reservations-' + today + '.png';
+
+      // Convertir canvas en Blob
+      const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/png'));
+      const file = new File([blob], fname, { type: 'image/png' });
+
+      // Web Share API — partage natif (WhatsApp, Telegram...)
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Récap réservations — ' + today,
+          text:  'Récapitulatif Terrain Dakar du ' + today,
+          files: [file],
+        });
+      } else {
+        // Fallback desktop : télécharger l'image + ouvrir WhatsApp Web
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = fname;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        const msg = encodeURIComponent('Récapitulatif réservations Terrain Dakar du ' + today + ' (voir image jointe)');
+        window.open('https://wa.me/?text=' + msg, '_blank');
+      }
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') console.error('Erreur partage :', e);
+    } finally {
+      this.imageEnCours = false;
+    }
+  }
+
+  fmtNum(n: number): string {
+    return new Intl.NumberFormat('fr-FR').format(Math.round(n || 0));
   }
 
   fmtK(n: number): string {
