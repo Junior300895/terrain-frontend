@@ -535,39 +535,65 @@ export class DashboardComponent implements OnInit {
     this.imageEnCours = true;
     try {
       const html2canvas = (await import('html2canvas')).default;
+
+      // Scale 1.5 pour réduire la taille — évite les problèmes mémoire sur mobile
       const canvas = await html2canvas(this.apercuContent.nativeElement, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        removeContainer: true,
       });
 
       const today = new Date().toISOString().slice(0, 10);
-      const fname = 'recap-reservations-' + today + '.png';
+      const fname = 'recap-' + today + '.png';
 
-      // Convertir canvas en Blob
-      const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/png'));
-      const file = new File([blob], fname, { type: 'image/png' });
+      // Convertir en Blob avec gestion null explicite
+      const blob: Blob | null = await new Promise(resolve =>
+        canvas.toBlob(b => resolve(b), 'image/png', 0.92)
+      );
 
-      // Web Share API — partage natif (WhatsApp, Telegram...)
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'Récap réservations — ' + today,
-          text:  'Récapitulatif Terrain Dakar du ' + today,
-          files: [file],
+      if (!blob) throw new Error('Blob null');
+
+      const file = new File([blob], fname, { type: 'image/png', lastModified: Date.now() });
+
+      // Tester le support Web Share avec fichier
+      const nav = navigator as any;
+      const canShareFile = !!(nav.share && nav.canShare?.({ files: [file] }));
+
+      if (canShareFile) {
+        // Partage natif — WhatsApp, Telegram, email...
+        await nav.share({ files: [file], title: 'Récap Terrain Dakar', text: today });
+      } else if (nav.share) {
+        // Web Share sans fichier — partager l'URL
+        await nav.share({
+          title: 'Récap réservations ' + today,
+          text: 'Récapitulatif Terrain Dakar du ' + today,
+          url: window.location.href,
         });
       } else {
-        // Fallback desktop : télécharger l'image + ouvrir WhatsApp Web
-        const a    = document.createElement('a');
-        a.href     = URL.createObjectURL(blob);
-        a.download = fname;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        const msg = encodeURIComponent('Récapitulatif réservations Terrain Dakar du ' + today + ' (voir image jointe)');
-        window.open('https://wa.me/?text=' + msg, '_blank');
+        // Fallback ultime — télécharger l'image
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href    = url; a.download = fname; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
     } catch (e: any) {
-      if (e?.name !== 'AbortError') console.error('Erreur partage :', e);
+      if (e?.name === 'AbortError') return; // annulé par l'utilisateur
+      // Dernier recours — téléchargement direct
+      console.warn('Web Share échoué, téléchargement direct :', e?.message);
+      try {
+        const html2canvas = (await import('html2canvas')).default;
+        const canvas2 = await html2canvas(this.apercuContent.nativeElement, {
+          scale: 1, backgroundColor: '#ffffff', logging: false,
+        });
+        const today = new Date().toISOString().slice(0, 10);
+        const a = document.createElement('a');
+        a.href = canvas2.toDataURL('image/png');
+        a.download = 'recap-' + today + '.png';
+        a.click();
+      } catch (e2) { console.error(e2); }
     } finally {
       this.imageEnCours = false;
     }
