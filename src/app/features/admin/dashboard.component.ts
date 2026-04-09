@@ -2,8 +2,6 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
-import { AuthService } from '../../core/services/auth.service';
-import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AdminNavComponent } from '../../shared/components/admin-nav/admin-nav.component';
 
@@ -330,60 +328,44 @@ export class DashboardComponent implements OnInit {
     return this.CHART_H - this.barH(revenu);
   }
 
-  constructor(
-    private adminSvc: AdminService,
-    private auth: AuthService,
-    private http: HttpClient,
-  ) {}
+  constructor(private adminSvc: AdminService) {}
   ngOnInit() { this.charger(); }
 
 
   waEnCours = signal(false);
 
-  async envoyerWhatsapp() {
-    if (this.waEnCours()) return;
-    this.waEnCours.set(true);
-    const today = new Date().toISOString().slice(0, 10);
-    const url   = `${environment.apiUrl}/rapports/apercu-journalier?date=${today}`;
-    const token = this.auth.getToken();
-    try {
-      const res  = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-      const json = await res.json();
-      const data = json.data ?? json;
+  envoyerWhatsapp() {
+    const d = this.dashboard();
+    if (!d) return;
 
-      const dateLabel = new Date().toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-      });
+    const dateLabel = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
 
-      const lignes: string[] = [];
-      lignes.push('⚽ *TERRAIN DAKAR*');
-      lignes.push('📅 ' + dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1));
-      lignes.push('');
-      lignes.push('📊 *Résumé*');
-      lignes.push('• Réservations : ' + data.nbReservations);
-      lignes.push('• Encaissé : ' + this.fmt(data.totalEncaisse) + ' FCFA');
-      if (data.totalReste > 0) {
-        lignes.push('• Reste à payer : ' + this.fmt(data.totalReste) + ' FCFA');
-      } else {
-        lignes.push('• Tout est soldé ✅');
-      }
-      lignes.push('');
-      lignes.push('📋 *Planning du jour*');
-      for (const r of data.reservations ?? []) {
-        const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
-        const reste  = r.reste > 0 ? ' — Reste ' + this.fmt(r.reste) + ' F' : '';
-        lignes.push(statut + ' *' + r.heure + '* — ' + r.client + ' (' + r.telephone + ')' + reste);
-      }
-      lignes.push('');
-      lignes.push('_Envoyé depuis Terrain Dakar_');
+    const resas     = d.prochainesReservations ?? [];
+    const encaisse  = d.revenuAujourdhui ?? 0;
 
-      const message = encodeURIComponent(lignes.join('%0A'));
-      window.open('https://wa.me/?text=' + message, '_blank');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      this.waEnCours.set(false);
+    const lignes: string[] = [];
+    lignes.push('⚽ *TERRAIN DAKAR*');
+    lignes.push('📅 ' + dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1));
+    lignes.push('');
+    lignes.push('📊 *Résumé*');
+    lignes.push('• Réservations : ' + resas.length);
+    lignes.push('• Encaissé : ' + this.fmt(encaisse) + ' FCFA');
+    lignes.push('');
+    lignes.push('📋 *Planning du jour*');
+    for (const r of resas) {
+      const heure  = r.creneau?.debut ? new Date(r.creneau.debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const client = (r.utilisateur?.prenom ?? '') + ' ' + (r.utilisateur?.nom ?? '');
+      const tel    = r.utilisateur?.telephone ?? '';
+      const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
+      lignes.push(statut + ' *' + heure + '* — ' + client + ' (' + tel + ')');
     }
+    lignes.push('');
+    lignes.push('_Envoyé depuis Terrain Dakar_');
+
+    const message = encodeURIComponent(lignes.join('%0A'));
+    window.open('https://wa.me/?text=' + message, '_blank');
   }
 
     fmt(n: number): string {
