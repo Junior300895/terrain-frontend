@@ -551,6 +551,7 @@ export class DashboardComponent implements OnInit {
     lignes.push('');
     lignes.push('_Envoyé depuis Terrain Dakar_');
 
+    
     const message = encodeURIComponent(lignes.join('%0A'));
     window.open('https://wa.me/?text=' + message, '_blank');
   }
