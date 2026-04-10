@@ -62,8 +62,8 @@ import { AuthService } from '../../core/services/auth.service';
           <!-- Démo -->
           <div class="mt-4 p-3 rounded-lg text-xs text-center"
                style="background:rgba(0,255,135,0.05);border:1px solid var(--border-accent);color:var(--text-secondary);">
-            <!-- Admin démo : <span style="color:var(--accent);font-weight:600;">770000000</span> -->
-            <!-- / <span style="color:var(--accent);font-weight:600;">Admin&#64;1234</span> -->
+            Admin démo : <span style="color:var(--accent);font-weight:600;">770000000</span>
+            / <span style="color:var(--accent);font-weight:600;">Admin&#64;1234</span>
           </div>
         </div>
       </div>
@@ -78,7 +78,14 @@ export class LoginComponent {
   onSubmit() {
     this.loading.set(true); this.error.set('');
     this.auth.connecter(this.form).subscribe({
-      next: () => this.router.navigate(['/reservations']),
+      next: () => {
+        const user = this.auth.currentUser();
+        if (user?.role === 'ADMIN' || user?.role === 'CAISSIER') {
+          this.router.navigate(['/admin/dashboard']);
+        } else {
+          this.router.navigate(['/reservations']);
+        }
+      },
       error: (err) => { this.error.set(err.error?.message || 'Identifiants incorrects'); this.loading.set(false); }
     });
   }
