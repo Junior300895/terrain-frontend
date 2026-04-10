@@ -351,15 +351,18 @@ export class DashboardComponent implements OnInit {
     lignes.push('');
     lignes.push('📊 *Résumé*');
     lignes.push('• Réservations : ' + resas.length);
-    // lignes.push('• Encaissé : ' + this.fmt(encaisse) + ' FCFA');
     lignes.push('');
     lignes.push('📋 *Planning du jour*');
     for (const r of resas) {
-      const heure  = r.creneau?.debut ? new Date(r.creneau.debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
-      const client = (r.utilisateur?.prenom ?? '') + ' ' + (r.utilisateur?.nom ?? '');
-      const tel    = r.utilisateur?.telephone ?? '';
-      const statut = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
-      lignes.push(statut + ' *' + heure + '* — ' + client + ' (' + tel + ')');
+      const heure       = r.creneau?.debut ? new Date(r.creneau.debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const client      = (r.utilisateur?.prenom ?? '') + ' ' + (r.utilisateur?.nom ?? '');
+      const tel         = r.utilisateur?.telephone ?? '';
+      const statut      = r.statut === 'CONFIRMEE' ? '✅' : '⏳';
+      const paye        = Number(r.paiement?.montant ?? 0);
+      const total       = Number(r.montantTotal ?? 0);
+      const reste       = total - paye;
+      const resteStr    = reste > 0 ? ' — ⚠ Reste *' + this.fmt(reste) + ' F*' : ' — ✓ Soldé';
+      lignes.push(statut + ' *' + heure + '* — ' + client + ' (' + tel + ')' + resteStr);
     }
     lignes.push('');
     lignes.push('_Envoyé depuis Terrain Dakar_');
