@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,406 +8,474 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <!-- ============================================================
-         HERO
-    ============================================================ -->
-    <section class="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+    <div class="home-wrapper" style="margin: 0 -1rem; overflow-x: hidden;">
 
-      <!-- Terrain SVG background -->
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style="opacity:0.07;">
-        <svg viewBox="0 0 800 540" width="900" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#00ff87" stroke-width="1.5">
-          <!-- Terrain extérieur -->
-          <rect x="20" y="20" width="760" height="500" rx="4"/>
-          <!-- Ligne médiane -->
-          <line x1="400" y1="20" x2="400" y2="520"/>
-          <!-- Cercle central -->
-          <circle cx="400" cy="270" r="60"/>
-          <circle cx="400" cy="270" r="3" fill="#00ff87"/>
-          <!-- Surface de réparation gauche -->
-          <rect x="20" y="160" width="110" height="220"/>
-          <rect x="20" y="205" width="55" height="130"/>
-          <!-- Surface de réparation droite -->
-          <rect x="670" y="160" width="110" height="220"/>
-          <rect x="725" y="205" width="55" height="130"/>
-          <!-- Arcs de coin -->
-          <path d="M20 20 Q35 20 35 35"/>
-          <path d="M780 20 Q765 20 765 35"/>
-          <path d="M20 520 Q35 520 35 505"/>
-          <path d="M780 520 Q765 520 765 505"/>
-          <!-- Points de penalty -->
-          <circle cx="105" cy="270" r="3" fill="#00ff87"/>
-          <circle cx="695" cy="270" r="3" fill="#00ff87"/>
-          <!-- Buts -->
-          <rect x="4" y="235" width="16" height="70" stroke-width="1"/>
-          <rect x="780" y="235" width="16" height="70" stroke-width="1"/>
-          <!-- Projecteurs coins -->
-          <circle cx="20" cy="20" r="8" fill="none" stroke-width="1"/>
-          <circle cx="780" cy="20" r="8" fill="none" stroke-width="1"/>
-          <circle cx="20" cy="520" r="8" fill="none" stroke-width="1"/>
-          <circle cx="780" cy="520" r="8" fill="none" stroke-width="1"/>
-        </svg>
-      </div>
+      <!-- ══════════════════════════════════════════════════════════
+           HERO
+      ══════════════════════════════════════════════════════════ -->
+      <section class="hero-section">
 
-      <!-- Glow orbs ambiance -->
-      <div class="absolute pointer-events-none" style="top:15%;left:8%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle, rgba(0,255,135,0.06) 0%, transparent 70%);"></div>
-      <div class="absolute pointer-events-none" style="bottom:20%;right:6%;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle, rgba(0,255,135,0.04) 0%, transparent 70%);"></div>
-
-      <!-- Hero content -->
-      <div class="relative z-10 text-center max-w-4xl mx-auto">
-
-        <!-- Badge -->
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 animate-fade-up"
-             style="background:rgba(0,255,135,0.08);border:1px solid var(--border-accent);">
-          <span class="w-2 h-2 rounded-full glow-pulse" style="background:var(--accent);"></span>
-          <span class="text-xs font-semibold uppercase tracking-widest" style="color:var(--accent);">
-            Dakar · Terrain disponible maintenant
-          </span>
+        <!-- Terrain SVG animé en fond -->
+        <div class="pitch-bg" aria-hidden="true">
+          <svg viewBox="0 0 900 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="rgba(0,255,135,0.12)" stroke-width="1.5">
+            <rect x="30" y="30" width="840" height="540" rx="4"/>
+            <line x1="450" y1="30" x2="450" y2="570"/>
+            <circle cx="450" cy="300" r="70"/>
+            <circle cx="450" cy="300" r="4" fill="rgba(0,255,135,0.2)"/>
+            <rect x="30" y="175" width="130" height="250"/>
+            <rect x="30" y="220" width="65" height="160"/>
+            <rect x="740" y="175" width="130" height="250"/>
+            <rect x="805" y="220" width="65" height="160"/>
+            <path d="M 30 300 Q 160 240 160 300 Q 160 360 30 300"/>
+            <path d="M 870 300 Q 740 240 740 300 Q 740 360 870 300"/>
+          </svg>
         </div>
 
-        <!-- Titre principal -->
-        <h1 class="font-display font-bold uppercase leading-none mb-6 animate-fade-up-2"
-            style="font-size:clamp(3rem, 10vw, 7rem);letter-spacing:0.01em;">
-          <span style="color:var(--text-primary);">Le Terrain</span>
-          <br>
-          <span style="color:var(--accent);text-shadow:0 0 60px rgba(0,255,135,0.3);">de Football</span>
-          <br>
-          <span style="color:var(--text-primary);">à Dakar</span>
-        </h1>
+        <!-- Grille décorative -->
+        <div class="grid-overlay" aria-hidden="true"></div>
 
-        <!-- Sous-titre -->
-        <p class="text-lg sm:text-xl mb-10 max-w-xl mx-auto animate-fade-up-3"
-           style="color:var(--text-secondary);line-height:1.7;">
-          Réservez votre créneau en ligne en 30 secondes.
-          Gazon synthétique, éclairage LED, disponible 7j/7 de 8h à 22h.
-        </p>
-
-        <!-- CTAs -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up-3">
-          <a routerLink="/reservations" class="btn-primary text-base px-8 py-4 w-full sm:w-auto" style="font-size:1rem;">
-            ⚽ Réserver maintenant
-          </a>
-          @if (!auth.isLoggedIn()) {
-            <a routerLink="/inscription" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto">
-              Créer un compte gratuit
-            </a>
-          } @else {
-            <a routerLink="/mes-reservations" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto">
-              Mes réservations →
-            </a>
+        <!-- Particules flottantes -->
+        <div class="particles" aria-hidden="true">
+          @for (p of particles; track p.id) {
+            <div class="particle" [style]="p.style"></div>
           }
         </div>
 
-        <!-- Stat bar -->
-        <div class="flex items-center justify-center gap-8 mt-14 flex-wrap animate-fade-up-3">
-          <div class="text-center">
-            <p class="font-display font-bold text-3xl" style="color:var(--accent);">40k</p>
-            <p class="text-xs uppercase tracking-widest mt-1" style="color:var(--text-muted);">FCFA / heure</p>
+        <!-- Contenu Hero -->
+        <div class="hero-content">
+
+          <!-- Badge propriétaire -->
+          <div class="owner-badge animate-fade-in">
+            <span class="badge-dot"></span>
+            <span>Terrain de Oumar Sy</span>
           </div>
-          <div class="w-px h-10 hidden sm:block" style="background:var(--border);"></div>
-          <div class="text-center">
-            <p class="font-display font-bold text-3xl" style="color:var(--accent);">7j/7</p>
-            <p class="text-xs uppercase tracking-widest mt-1" style="color:var(--text-muted);">Ouvert</p>
-          </div>
-          <div class="w-px h-10 hidden sm:block" style="background:var(--border);"></div>
-          <div class="text-center">
-            <p class="font-display font-bold text-3xl" style="color:var(--accent);">14h</p>
-            <p class="text-xs uppercase tracking-widest mt-1" style="color:var(--text-muted);">De 8h à 22h</p>
-          </div>
-          <div class="w-px h-10 hidden sm:block" style="background:var(--border);"></div>
-          <div class="text-center">
-            <p class="font-display font-bold text-3xl" style="color:var(--accent);">30s</p>
-            <p class="text-xs uppercase tracking-widest mt-1" style="color:var(--text-muted);">Pour réserver</p>
-          </div>
-        </div>
-      </div>
 
-      <!-- Scroll indicator -->
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-fade-up-3">
-        <span class="text-xs uppercase tracking-widest" style="color:var(--text-muted);">Découvrir</span>
-        <div class="w-px h-8" style="background:linear-gradient(to bottom, var(--text-muted), transparent);"></div>
-      </div>
-    </section>
+          <!-- Titre principal -->
+          <h1 class="hero-title animate-fade-up">
+            <span class="title-line-1">TERRAIN</span>
+            <span class="title-line-2">
+              <span class="title-accent">DAKAR</span>
+            </span>
+          </h1>
 
-    <!-- ============================================================
-         COMMENT ÇA MARCHE
-    ============================================================ -->
-    <section class="py-24 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8"
-             style="background:var(--bg-surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-      <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-16">
-          <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--accent);">Simple & rapide</p>
-          <h2 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">
-            Comment ça marche ?
-          </h2>
-        </div>
+          <!-- Sous-titre -->
+          <p class="hero-subtitle animate-fade-up-2">
+            La plateforme de référence pour réserver votre terrain de football à Dakar.
+            Simple, rapide, disponible 24h/24.
+          </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 relative">
-          <!-- Ligne de connexion desktop -->
-          <div class="hidden sm:block absolute top-10 left-1/3 right-1/3 h-px"
-               style="background:linear-gradient(90deg, transparent, var(--border-accent), transparent);"></div>
-
-          @for (step of steps; track step.num) {
-            <div class="flex flex-col items-center text-center gap-4">
-              <div class="relative">
-                <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl transition-all duration-300"
-                     [style.background]="step.bg"
-                     [style.border]="step.border"
-                     [style.boxShadow]="step.glow">
-                  {{ step.icon }}
-                </div>
-                <div class="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-display font-bold"
-                     style="background:var(--accent);color:#0a0e14;">
-                  {{ step.num }}
-                </div>
-              </div>
-              <div>
-                <h3 class="font-display font-bold text-xl uppercase tracking-wide mb-2">{{ step.title }}</h3>
-                <p class="text-sm leading-relaxed" style="color:var(--text-secondary);">{{ step.desc }}</p>
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="text-center mt-14">
-          <a routerLink="/reservations" class="btn-primary text-base px-10 py-4">
-            Commencer maintenant
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         FEATURES
-    ============================================================ -->
-    <section class="py-24 max-w-6xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--accent);">Pourquoi nous choisir</p>
-        <h2 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">
-          Un terrain d'exception
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        @for (feat of features; track feat.icon) {
-          <div class="card card-hover group transition-all duration-300">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 transition-all duration-300"
-                 style="background:var(--accent-dark);border:1px solid var(--border-accent);"
-                 [style.boxShadow]="'none'"
-                 onmouseenter="this.style.boxShadow='0 0 16px rgba(0,255,135,0.2)'"
-                 onmouseleave="this.style.boxShadow='none'">
-              {{ feat.icon }}
-            </div>
-            <h3 class="font-display font-bold text-xl uppercase tracking-wide mb-2">{{ feat.title }}</h3>
-            <p class="text-sm leading-relaxed" style="color:var(--text-secondary);">{{ feat.desc }}</p>
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- ============================================================
-         TARIFS
-    ============================================================ -->
-    <section class="py-24 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8"
-             style="background:var(--bg-surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-16">
-          <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--accent);">Tarification</p>
-          <h2 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">Nos tarifs</h2>
-          <p class="mt-4 text-sm" style="color:var(--text-secondary);">Transparent, sans frais cachés</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-          <!-- Tarif standard -->
-          <div class="card flex flex-col gap-4"
-               style="border-color:var(--border);">
-            <div>
-              <p class="text-xs uppercase tracking-widest font-semibold mb-1" style="color:var(--text-secondary);">Tarif standard</p>
-              <div class="flex items-end gap-2">
-                <span class="font-display font-bold text-5xl" style="color:var(--text-primary);">40 000</span>
-                <span class="text-lg mb-1" style="color:var(--text-secondary);">FCFA / heure</span>
-              </div>
-            </div>
-            <ul class="space-y-2.5 text-sm" style="color:var(--text-secondary);">
-              @for (item of tarifsStandard; track item) {
-                <li class="flex items-center gap-2">
-                  <span style="color:var(--accent);">✓</span> {{ item }}
-                </li>
-              }
-            </ul>
-            <a routerLink="/reservations" class="btn-secondary text-sm text-center mt-auto">
-              Réserver ce créneau
+          <!-- CTA -->
+          <div class="hero-cta animate-fade-up-3">
+            <a routerLink="/reservations" class="cta-primary">
+              <span class="cta-icon">⚽</span>
+              <span>Réserver maintenant</span>
+              <span class="cta-arrow">→</span>
             </a>
+            @if (!auth.isLoggedIn()) {
+              <a routerLink="/connexion" class="cta-secondary">Se connecter</a>
+            }
           </div>
 
-          <!-- Tarif soirée / promoted -->
-          <div class="card flex flex-col gap-4 relative overflow-hidden"
-               style="border-color:var(--border-accent);box-shadow:0 0 30px var(--accent-glow);">
-            <div class="absolute top-4 right-4">
-              <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full"
-                    style="background:var(--accent);color:#0a0e14;">
-                Populaire
-              </span>
+          <!-- Stats -->
+          <div class="hero-stats animate-fade-up-3">
+            <div class="stat-item">
+              <span class="stat-number">40K</span>
+              <span class="stat-label">FCFA / heure</span>
             </div>
-            <div>
-              <p class="text-xs uppercase tracking-widest font-semibold mb-1" style="color:var(--accent);">Soirée (18h – 22h)</p>
-              <div class="flex items-end gap-2">
-                <span class="font-display font-bold text-5xl" style="color:var(--accent);">40 000</span>
-                <span class="text-lg mb-1" style="color:var(--text-secondary);">FCFA / heure</span>
-              </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">24h</span>
+              <span class="stat-label">Disponible</span>
             </div>
-            <ul class="space-y-2.5 text-sm" style="color:var(--text-secondary);">
-              @for (item of tarifsSoiree; track item) {
-                <li class="flex items-center gap-2">
-                  <span style="color:var(--accent);">✓</span> {{ item }}
-                </li>
-              }
-            </ul>
-            <a routerLink="/reservations" class="btn-primary text-sm text-center mt-auto">
-              Réserver maintenant
-            </a>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">7j</span>
+              <span class="stat-label">Sur 7</span>
+            </div>
           </div>
         </div>
 
-        <!-- Modes de paiement -->
-        <div class="mt-10 p-5 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4"
-             style="background:var(--bg-card);border:1px solid var(--border);">
-          <div>
-            <p class="font-semibold text-sm mb-1">Modes de paiement acceptés</p>
-            <p class="text-xs" style="color:var(--text-secondary);">Paiement à l'arrivée ou en ligne</p>
-          </div>
-          <div class="flex items-center gap-3 flex-wrap">
-            @for (mode of paiements; track mode.label) {
-              <div class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2"
-                   style="background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);">
-                <span>{{ mode.icon }}</span> {{ mode.label }}
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator animate-fade-up-3">
+          <div class="scroll-dot"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           FEATURES
+      ══════════════════════════════════════════════════════════ -->
+      <section class="features-section">
+        <div class="section-inner">
+
+          <div class="section-tag">Pourquoi nous choisir</div>
+          <h2 class="section-title">Tout pour votre match</h2>
+
+          <div class="features-grid">
+            @for (f of features; track f.icon) {
+              <div class="feature-card">
+                <div class="feature-icon-wrap">{{ f.icon }}</div>
+                <h3 class="feature-title">{{ f.title }}</h3>
+                <p class="feature-desc">{{ f.desc }}</p>
               </div>
             }
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ============================================================
-         INFOS PRATIQUES
-    ============================================================ -->
-    <section class="py-24 max-w-5xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--accent);">Infos pratiques</p>
-        <h2 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide">
-          Tout ce qu'il faut savoir
-        </h2>
-      </div>
+      <!-- ══════════════════════════════════════════════════════════
+           HOW IT WORKS
+      ══════════════════════════════════════════════════════════ -->
+      <section class="steps-section">
+        <div class="section-inner">
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        @for (info of infos; track info.title) {
-          <div class="flex items-start gap-4 p-5 rounded-xl"
-               style="background:var(--bg-card);border:1px solid var(--border);">
-            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
-                 style="background:var(--accent-dark);border:1px solid var(--border-accent);">
-              {{ info.icon }}
-            </div>
-            <div>
-              <p class="font-display font-bold uppercase tracking-wide mb-1">{{ info.title }}</p>
-              <p class="text-sm leading-relaxed" style="color:var(--text-secondary);">{{ info.desc }}</p>
-            </div>
+          <div class="section-tag">Simple comme bonjour</div>
+          <h2 class="section-title">Réserver en 3 étapes</h2>
+
+          <div class="steps-grid">
+            @for (s of steps; track s.num) {
+              <div class="step-card">
+                <div class="step-num">{{ s.num }}</div>
+                <div class="step-icon">{{ s.icon }}</div>
+                <h3 class="step-title">{{ s.title }}</h3>
+                <p class="step-desc">{{ s.desc }}</p>
+              </div>
+            }
           </div>
-        }
-      </div>
-    </section>
-
-    <!-- ============================================================
-         CTA FINAL
-    ============================================================ -->
-    <section class="py-24 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden"
-             style="background:var(--bg-surface);border-top:1px solid var(--border);">
-      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse at center, rgba(0,255,135,0.05) 0%, transparent 60%);"></div>
-      <div class="relative z-10 max-w-2xl mx-auto">
-        <div class="text-6xl mb-6">⚽</div>
-        <h2 class="font-display font-bold text-4xl sm:text-5xl uppercase tracking-wide mb-4">
-          Prêt à jouer ?
-        </h2>
-        <p class="text-lg mb-10" style="color:var(--text-secondary);">
-          Réservez votre terrain en 30 secondes. Aucune avance, paiement sur place.
-        </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a routerLink="/reservations" class="btn-primary text-base px-10 py-4 w-full sm:w-auto">
-            Voir les créneaux disponibles
-          </a>
-          @if (!auth.isLoggedIn()) {
-            <a routerLink="/inscription" class="btn-secondary text-base px-10 py-4 w-full sm:w-auto">
-              Créer un compte
-            </a>
-          }
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════
+           CTA FINAL
+      ══════════════════════════════════════════════════════════ -->
+      <section class="cta-section">
+        <div class="cta-inner">
+          <div class="cta-glow" aria-hidden="true"></div>
+          <span class="cta-tag">Prêt à jouer ?</span>
+          <h2 class="cta-heading">Votre prochain match commence ici</h2>
+          <p class="cta-text">Choisissez votre créneau, réservez en ligne et profitez du terrain.</p>
+          <a routerLink="/reservations" class="cta-primary cta-large">
+            <span>⚽ Voir les créneaux disponibles</span>
+            <span class="cta-arrow">→</span>
+          </a>
+        </div>
+      </section>
+
+    </div>
+
+    <style>
+      /* ── Reset & variables ─────────────────────────────────── */
+      .home-wrapper { background: var(--bg-base, #0a0e14); }
+
+      /* ── HERO ──────────────────────────────────────────────── */
+      .hero-section {
+        position: relative;
+        min-height: 96vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 6rem 1.5rem 4rem;
+        overflow: hidden;
+      }
+
+      .pitch-bg {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        pointer-events: none;
+      }
+      .pitch-bg svg { width: 100%; height: 100%; object-fit: cover; }
+
+      .grid-overlay {
+        position: absolute; inset: 0; pointer-events: none;
+        background-image:
+          linear-gradient(rgba(0,255,135,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,255,135,0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+      .particle {
+        position: absolute; border-radius: 50%;
+        background: rgba(0,255,135,0.5);
+        animation: float-up linear infinite;
+      }
+
+      @keyframes float-up {
+        0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 0.3; }
+        100% { transform: translateY(-20px) scale(1); opacity: 0; }
+      }
+
+      .hero-content {
+        position: relative; z-index: 2;
+        display: flex; flex-direction: column; align-items: center;
+        text-align: center; gap: 1.5rem; max-width: 800px;
+      }
+
+      .owner-badge {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.4rem 1rem; border-radius: 999px;
+        background: rgba(0,255,135,0.08);
+        border: 1px solid rgba(0,255,135,0.25);
+        font-size: 0.75rem; font-weight: 600;
+        color: var(--accent, #00ff87);
+        letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      .badge-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--accent, #00ff87);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.4); }
+      }
+
+      .hero-title {
+        display: flex; flex-direction: column; align-items: center;
+        line-height: 0.9; margin: 0;
+        font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+        font-weight: 800; text-transform: uppercase;
+      }
+      .title-line-1 {
+        font-size: clamp(4rem, 14vw, 9rem);
+        color: rgba(255,255,255,0.12);
+        letter-spacing: -0.02em;
+      }
+      .title-line-2 {
+        font-size: clamp(4.5rem, 16vw, 10rem);
+        letter-spacing: -0.02em;
+        margin-top: -0.1em;
+      }
+      .title-accent {
+        color: var(--accent, #00ff87);
+        text-shadow: 0 0 60px rgba(0,255,135,0.4), 0 0 120px rgba(0,255,135,0.15);
+        position: relative;
+      }
+      .title-accent::after {
+        content: '';
+        position: absolute; bottom: -4px; left: 0; right: 0;
+        height: 3px; background: var(--accent, #00ff87);
+        border-radius: 2px;
+        box-shadow: 0 0 20px rgba(0,255,135,0.6);
+      }
+
+      .hero-subtitle {
+        font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+        color: rgba(255,255,255,0.5);
+        max-width: 520px; line-height: 1.7; margin: 0;
+      }
+
+      .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+      .cta-primary {
+        display: inline-flex; align-items: center; gap: 0.75rem;
+        padding: 0.9rem 2rem; border-radius: 0.75rem;
+        background: var(--accent, #00ff87);
+        color: #0a0e14; font-weight: 800;
+        font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em;
+        text-decoration: none; transition: all 0.2s;
+        box-shadow: 0 0 30px rgba(0,255,135,0.3);
+      }
+      .cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 50px rgba(0,255,135,0.5);
+      }
+      .cta-icon { font-size: 1.1rem; }
+      .cta-arrow { transition: transform 0.2s; }
+      .cta-primary:hover .cta-arrow { transform: translateX(4px); }
+
+      .cta-secondary {
+        display: inline-flex; align-items: center;
+        padding: 0.9rem 1.75rem; border-radius: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.7);
+        font-size: 0.9rem; font-weight: 600;
+        text-decoration: none; transition: all 0.2s;
+      }
+      .cta-secondary:hover {
+        border-color: var(--accent, #00ff87);
+        color: var(--accent, #00ff87);
+      }
+
+      .hero-stats {
+        display: flex; align-items: center; gap: 2rem;
+        padding: 1.25rem 2.5rem; border-radius: 1rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        backdrop-filter: blur(10px);
+      }
+      .stat-item { text-align: center; }
+      .stat-number {
+        display: block;
+        font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+        font-size: 1.8rem; font-weight: 800;
+        color: var(--accent, #00ff87); line-height: 1;
+      }
+      .stat-label {
+        display: block; font-size: 0.65rem;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem;
+      }
+      .stat-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.08); }
+
+      .scroll-indicator {
+        position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+        display: flex; flex-direction: column; align-items: center;
+      }
+      .scroll-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: rgba(0,255,135,0.5);
+        animation: scroll-bounce 2s ease-in-out infinite;
+      }
+      @keyframes scroll-bounce {
+        0%, 100% { transform: translateY(0); opacity: 1; }
+        50% { transform: translateY(8px); opacity: 0.3; }
+      }
+
+      /* ── SECTIONS communes ─────────────────────────────────── */
+      .section-inner { max-width: 1100px; margin: 0 auto; padding: 5rem 1.5rem; }
+      .section-tag {
+        display: inline-block;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.15em;
+        color: var(--accent, #00ff87);
+        margin-bottom: 0.75rem;
+      }
+      .section-title {
+        font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800; text-transform: uppercase;
+        color: #fff; margin: 0 0 3rem; line-height: 1;
+      }
+
+      /* ── FEATURES ──────────────────────────────────────────── */
+      .features-section { background: rgba(255,255,255,0.02); }
+      .features-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+      }
+      .feature-card {
+        padding: 2rem; border-radius: 1rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        transition: all 0.25s;
+      }
+      .feature-card:hover {
+        border-color: rgba(0,255,135,0.25);
+        background: rgba(0,255,135,0.04);
+        transform: translateY(-4px);
+      }
+      .feature-icon-wrap {
+        font-size: 2.2rem; margin-bottom: 1rem; display: block;
+      }
+      .feature-title {
+        font-size: 1rem; font-weight: 700; color: #fff;
+        margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;
+      }
+      .feature-desc { font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.7; margin: 0; }
+
+      /* ── STEPS ─────────────────────────────────────────────── */
+      .steps-section {}
+      .steps-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem; position: relative;
+      }
+      .step-card {
+        display: flex; flex-direction: column; align-items: flex-start;
+        gap: 0.75rem; padding: 1.5rem 0;
+        border-top: 2px solid rgba(0,255,135,0.2);
+      }
+      .step-num {
+        font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+        font-size: 3.5rem; font-weight: 800; line-height: 1;
+        color: rgba(0,255,135,0.15);
+      }
+      .step-icon { font-size: 1.8rem; }
+      .step-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
+      .step-desc { font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.7; margin: 0; }
+
+      /* ── CTA FINAL ─────────────────────────────────────────── */
+      .cta-section {
+        padding: 2rem 1.5rem 5rem;
+        display: flex; justify-content: center;
+      }
+      .cta-inner {
+        position: relative; max-width: 700px; width: 100%;
+        text-align: center; padding: 4rem 2rem;
+        border-radius: 1.5rem;
+        background: rgba(0,255,135,0.04);
+        border: 1px solid rgba(0,255,135,0.15);
+        overflow: hidden;
+      }
+      .cta-glow {
+        position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+        width: 400px; height: 300px; border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(0,255,135,0.12) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      .cta-tag {
+        display: inline-block; font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.15em;
+        color: var(--accent, #00ff87); margin-bottom: 1rem;
+      }
+      .cta-heading {
+        font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+        font-size: clamp(2rem, 5vw, 3rem); font-weight: 800;
+        text-transform: uppercase; color: #fff; margin: 0 0 1rem; line-height: 1.1;
+      }
+      .cta-text {
+        font-size: 0.9rem; color: rgba(255,255,255,0.45);
+        margin: 0 0 2.5rem; line-height: 1.7;
+      }
+      .cta-large { padding: 1.1rem 2.5rem; font-size: 1rem; }
+
+      /* ── Animations ────────────────────────────────────────── */
+      .animate-fade-in  { animation: fadeIn 0.8s ease forwards; }
+      .animate-fade-up  { animation: fadeUp 0.8s 0.1s ease both; }
+      .animate-fade-up-2 { animation: fadeUp 0.8s 0.25s ease both; }
+      .animate-fade-up-3 { animation: fadeUp 0.8s 0.4s ease both; }
+
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+    </style>
   `
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
+  particles: { id: number; style: string }[] = [];
+
+  features = [
+    { icon: '📅', title: 'Calendrier temps réel',  desc: 'Visualisez tous les créneaux disponibles en temps réel, 24h/24 et 7j/7.' },
+    { icon: '⚡', title: 'Réservation instantanée', desc: 'Choisissez votre heure, confirmez et recevez votre code en quelques secondes.' },
+    { icon: '💰', title: 'Paiement flexible',       desc: 'Payez en totalité ou versez un acompte — Wave, Orange Money, Sur place.' },
+    { icon: '📲', title: 'Confirmation WhatsApp',   desc: 'Recevez votre confirmation directement sur WhatsApp après paiement.' },
+    { icon: '🔒', title: 'Réservation sécurisée',   desc: 'Votre créneau est bloqué dès la réservation. Zéro risque de double réservation.' },
+    { icon: '📊', title: 'Suivi en ligne',           desc: 'Consultez vos réservations passées et à venir depuis votre espace personnel.' },
+  ];
+
+  steps = [
+    { num: '01', icon: '🔍', title: 'Choisissez un créneau', desc: 'Parcourez le calendrier et sélectionnez l\'heure qui vous convient.' },
+    { num: '02', icon: '✍️', title: 'Confirmez',             desc: 'Entrez vos informations et validez votre réservation en un clic.' },
+    { num: '03', icon: '⚽', title: 'Jouez !',              desc: 'Présentez-vous au terrain avec votre code de confirmation. C\'est parti !' },
+  ];
 
   constructor(public auth: AuthService) {}
 
-  steps = [
-    {
-      num: 1, icon: '📅',
-      title: 'Choisissez',
-      desc: 'Consultez le calendrier et sélectionnez le créneau qui vous convient.',
-      bg: 'rgba(0,255,135,0.08)', border: '1px solid rgba(0,255,135,0.25)',
-      glow: '0 0 20px rgba(0,255,135,0.15)'
-    },
-    {
-      num: 2, icon: '✅',
-      title: 'Confirmez',
-      desc: 'Validez votre réservation en un clic. Recevez votre code de confirmation.',
-      bg: 'rgba(72,149,239,0.08)', border: '1px solid rgba(72,149,239,0.25)',
-      glow: '0 0 20px rgba(72,149,239,0.12)'
-    },
-    {
-      num: 3, icon: '⚽',
-      title: 'Jouez !',
-      desc: 'Présentez-vous au terrain avec votre code. Payez sur place et profitez !',
-      bg: 'rgba(255,209,102,0.08)', border: '1px solid rgba(255,209,102,0.25)',
-      glow: '0 0 20px rgba(255,209,102,0.12)'
-    }
-  ];
+  ngOnInit() {
+    // Générer les particules flottantes
+    this.particles = Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      style: [
+        `left: ${Math.random() * 100}%`,
+        `width: ${2 + Math.random() * 4}px`,
+        `height: ${2 + Math.random() * 4}px`,
+        `animation-duration: ${8 + Math.random() * 12}s`,
+        `animation-delay: ${Math.random() * 10}s`,
+        `opacity: ${0.3 + Math.random() * 0.4}`,
+      ].join(';')
+    }));
+  }
 
-  features = [
-    { icon: '🌿', title: 'Gazon synthétique',   desc: 'Surface de jeu de qualité professionnelle, entretenue régulièrement pour un maximum de confort.' },
-    { icon: '💡', title: 'Éclairage LED',        desc: 'Projecteurs puissants pour jouer en soirée dans des conditions optimales, même après le coucher du soleil.' },
-    { icon: '🅿️', title: 'Parking gratuit',      desc: 'Espace de stationnement sécurisé à disposition de tous les joueurs, sans frais supplémentaires.' },
-    { icon: '🚿', title: 'Vestiaires',           desc: 'Vestiaires propres et douches disponibles avant et après votre match.' },
-    { icon: '📱', title: 'Réservation en ligne', desc: 'Réservez depuis votre téléphone en 30 secondes, 24h/24 et 7j/7, sans appel ni déplacement.' },
-    { icon: '🔒', title: 'Paiement sécurisé',   desc: 'Payez sur place à votre arrivée, ou via Wave et Orange Money. Aucune avance requise.' },
-  ];
-
-  tarifsStandard = [
-    'Lundi au vendredi, 8h – 18h',
-    'Accès vestiaires inclus',
-    'Parking gratuit',
-    'Annulation jusqu\'à 2h avant'
-  ];
-
-  tarifsSoiree = [
-    'Tous les jours, 18h – 22h',
-    'Éclairage LED inclus',
-    'Accès vestiaires inclus',
-    'Parking gratuit'
-  ];
-
-  paiements = [
-    { icon: '💵', label: 'Sur place' },
-    { icon: '📲', label: 'Wave' },
-    { icon: '🟠', label: 'Orange Money' },
-    { icon: '🟣', label: 'Free Money' },
-  ];
-
-  infos = [
-    { icon: '📍', title: 'Adresse',      desc: 'Dakar, Sénégal. Nous vous envoyons la localisation exacte à la confirmation de réservation.' },
-    { icon: '⏰', title: 'Horaires',     desc: 'Ouvert 7 jours sur 7, de 8h00 à 22h00. Créneaux d\'une heure, réservables jusqu\'à 30 min avant.' },
-    { icon: '📞', title: 'Contact',      desc: 'Une question ? Contactez-nous via WhatsApp au +221 77 000 00 00. Réponse rapide garantie.' },
-    { icon: '🔄', title: 'Annulation',   desc: 'Annulation gratuite jusqu\'à 2 heures avant le début du créneau. Simple et sans condition.' },
-    { icon: '👥', title: 'Capacité',     desc: 'Terrain homologué pour 5 vs 5, 7 vs 7 ou 11 vs 11. Adapté à tous les formats de jeu.' },
-    { icon: '🏆', title: 'Tournois',     desc: 'Organisez vos tournois et événements. Tarifs groupes disponibles sur demande.' },
-  ];
+  ngOnDestroy() {}
 }
