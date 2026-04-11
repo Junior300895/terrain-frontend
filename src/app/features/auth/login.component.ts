@@ -65,11 +65,11 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <!-- Démo -->
-          <div class="mt-4 p-3 rounded-lg text-xs text-center"
+          <!-- <div class="mt-4 p-3 rounded-lg text-xs text-center"
                style="background:rgba(0,255,135,0.05);border:1px solid var(--border-accent);color:var(--text-secondary);">
             Admin démo : <span style="color:var(--accent);font-weight:600;">770000000</span>
             / <span style="color:var(--accent);font-weight:600;">Admin&#64;1234</span>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
