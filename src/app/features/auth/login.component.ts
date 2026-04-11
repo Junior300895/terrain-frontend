@@ -1,7 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -25,6 +25,11 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
 
         <div class="card">
+          @if (sessionExpired()) {
+            <div class="p-3 rounded-xl text-sm mb-2" style="background:rgba(251,191,36,0.1);color:rgba(251,191,36,0.9);border:1px solid rgba(251,191,36,0.2);">
+              ⏱ Votre session a expiré. Veuillez vous reconnecter.
+            </div>
+          }
           @if (error()) {
             <div class="mb-5 p-3 rounded-lg text-sm flex items-center gap-2"
                  style="background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);color:var(--red);">
@@ -70,11 +75,22 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   form = { telephone: '', motDePasse: '' };
-  loading = signal(false);
-  error = signal('');
-  constructor(private auth: AuthService, private router: Router) {}
+  loading        = signal(false);
+  error          = signal('');
+  sessionExpired = signal(false);
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
+
+  ngOnInit() {
+    if (this.route.snapshot.queryParams['session'] === 'expired') {
+      this.sessionExpired.set(true);
+    }
+  }
   onSubmit() {
     this.loading.set(true); this.error.set('');
     this.auth.connecter(this.form).subscribe({
