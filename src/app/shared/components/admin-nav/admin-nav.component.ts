@@ -23,6 +23,14 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
          class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200">
         <span>📈</span> Rapports
       </a>
+      <a routerLink="/admin/depenses" routerLinkActive="admin-tab-active"
+         class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200">
+        <span>🧾</span> Dépenses
+      </a>
+      <a routerLink="/admin/depenses" routerLinkActive="admin-tab-active"
+         class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200">
+        <span>💸</span> Dépenses
+      </a>
     </div>
     <style>
       .admin-tab { color: var(--text-secondary); }

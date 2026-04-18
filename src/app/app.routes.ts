@@ -31,7 +31,9 @@ export const routes: Routes = [
       { path: 'dashboard',    loadComponent: () => import('./features/admin/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'reservations', loadComponent: () => import('./features/admin/reservations-list.component').then(m => m.ReservationsListComponent) },
       { path: 'creneaux',     loadComponent: () => import('./features/admin/creneaux-manager.component').then(m => m.CreneauxManagerComponent) },
-      { path: 'rapports',     loadComponent: () => import('./features/admin/rapport.component').then(m => m.RapportComponent) }
+      { path: 'rapports',     loadComponent: () => import('./features/admin/rapport.component').then(m => m.RapportComponent) },
+      { path: 'depenses',     loadComponent: () => import('./features/admin/depenses.component').then(m => m.DepensesComponent) },
+      { path: 'depenses',     loadComponent: () => import('./features/admin/depenses.component').then(m => m.DepensesComponent) }
     ]
   },
   { path: '**', redirectTo: '' }
