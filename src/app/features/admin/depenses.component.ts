@@ -45,8 +45,12 @@ import { environment } from '../../../environments/environment';
             <select [(ngModel)]="filtreCategorie" class="input-field" (ngModelChange)="charger()"
                     style="background:var(--bg-surface);color:var(--text-primary);">
               <option value="">Toutes</option>
-              @for (c of categories; track c.value) {
-                <option [value]="c.value" style="background:var(--bg-surface);">{{ c.label }}</option>
+              @for (g of groupes; track g.nom) {
+                <optgroup [label]="g.nom" style="background:var(--bg-surface);">
+                  @for (c of g.items; track c.value) {
+                    <option [value]="c.value" style="background:var(--bg-surface);">{{ c.icon }} {{ c.label }}</option>
+                  }
+                </optgroup>
               }
             </select>
           </div>
@@ -178,9 +182,13 @@ import { environment } from '../../../environments/environment';
               <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:var(--text-secondary);">Catégorie *</label>
               <select [(ngModel)]="form.categorie" class="input-field w-full"
                       style="background:var(--bg-surface);color:var(--text-primary);">
-                <option value="" style="background:var(--bg-surface);">Sélectionner...</option>
-                @for (c of categories; track c.value) {
-                  <option [value]="c.value" style="background:var(--bg-surface);">{{ c.label }}</option>
+                <option value="" style="background:var(--bg-surface);">-- Choisir --</option>
+                @for (g of groupes; track g.nom) {
+                  <optgroup [label]="g.nom" style="background:var(--bg-surface);">
+                    @for (c of g.items; track c.value) {
+                      <option [value]="c.value" style="background:var(--bg-surface);">{{ c.icon }} {{ c.label }}</option>
+                    }
+                  </optgroup>
                 }
               </select>
             </div>
@@ -300,6 +308,15 @@ export class DepensesComponent implements OnInit {
   };
   fichierSelectionne: File | null = null;
 
+  groupes = (() => {
+    const map = new Map<string, any[]>();
+    for (const c of CATEGORIES) {
+      if (!map.has(c.groupe)) map.set(c.groupe, []);
+      map.get(c.groupe)!.push(c);
+    }
+    return Array.from(map.entries()).map(([nom, items]) => ({ nom, items }));
+  })();
+
   totalDepenses = computed(() =>
     this.depenses().reduce((s, d) => s + Number(d.montant), 0)
   );
@@ -385,7 +402,7 @@ export class DepensesComponent implements OnInit {
 
     obs.subscribe({
       next: () => { this.enCours.set(false); this.fermerModal(); this.charger(); },
-      error: err => {
+      error: (err: any) => {
         this.erreur.set(err.error?.message || 'Erreur lors de l\'enregistrement');
         this.enCours.set(false);
       },
